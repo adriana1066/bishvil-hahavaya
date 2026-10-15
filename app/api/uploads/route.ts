@@ -2,11 +2,9 @@ import { NextResponse } from "next/server";
 import { env } from "cloudflare:workers";
 import { getChatGPTUser } from "../../chatgpt-auth";
 
-const ADMIN_EMAIL = "harel.a.d@gmail.com";
-
 export async function POST(request: Request) {
   const user = await getChatGPTUser();
-  if (!user || user.email.toLowerCase() !== ADMIN_EMAIL) return NextResponse.json({error:"אין הרשאה"},{status:403});
+  if (!user || user.email.toLowerCase() !== env.ADMIN_EMAIL.toLowerCase()) return NextResponse.json({error:"אין הרשאה"},{status:403});
   const form = await request.formData();
   const file = form.get("file");
   if (!(file instanceof File) || !file.type.startsWith("image/")) return NextResponse.json({error:"יש לבחור תמונה"},{status:400});
