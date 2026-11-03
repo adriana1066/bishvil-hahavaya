@@ -53,9 +53,9 @@ function VeganSuppliersShowcase() {
 
 function AuntStoryVideo() {
   return <section className="aunt-story-video" aria-label="סרטון הדודה">
-    <video controls playsInline preload="metadata" poster="/aunt-story-poster.jpg">
-      <source src="/aunt-story.mp4" type="video/mp4"/>
-    </video>
+    <div className="aunt-story-video-stage">
+      <StoryVideo src="/aunt-story.mp4" poster="/aunt-story-poster.jpg" loop={false}/>
+    </div>
   </section>;
 }
 
