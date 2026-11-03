@@ -13,7 +13,7 @@ export function ExperienceEntryLink({label}:{label:string}) {
   return <a className="opening-enter" href="#story" onClick={enableAudio}><span>{label}</span><b>↓</b></a>;
 }
 
-export function StoryVideo({poster}:{poster:string}) {
+export function StoryVideo({poster,src="/welcome-event.mp4",loop=true}:{poster:string;src?:string;loop?:boolean}) {
   const videoRef=useRef<HTMLVideoElement>(null);
   const visibleRef=useRef(false);
   const [muted,setMuted]=useState(true);
@@ -72,7 +72,7 @@ export function StoryVideo({poster}:{poster:string}) {
   };
 
   return <>
-    <video ref={videoRef} className="story-video-player" src="/welcome-event.mp4" autoPlay muted loop playsInline preload="auto" poster={poster}>הדפדפן שלך אינו תומך בהצגת הסרטון.</video>
+    <video ref={videoRef} className="story-video-player" src={src} autoPlay muted loop={loop} playsInline preload="auto" poster={poster}>הדפדפן שלך אינו תומך בהצגת הסרטון.</video>
     <button className="story-video-sound" type="button" onClick={toggleSound} aria-label={muted?"הפעלת קול בסרטון":"השתקת הסרטון"}>{muted?"להפעיל קול":"להשתיק"}<span aria-hidden="true">{muted?"♪":"◖"}</span></button>
   </>;
 }
