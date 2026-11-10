@@ -1,11 +1,11 @@
-import { requireChatGPTUser } from "../chatgpt-auth";
+import { redirect } from "next/navigation";
 import { getSiteContent } from "../../lib/content-store";
+import { hasAdminSession } from "../../lib/admin-auth";
 import ManageClient from "./ManageClient";
-import { env } from "cloudflare:workers";
 
 export const dynamic = "force-dynamic";
+
 export default async function ManagePage() {
-  const user = await requireChatGPTUser("/manage");
-  if (user.email.toLowerCase() !== env.ADMIN_EMAIL.toLowerCase()) return <main className="manage-denied">חדר הניהול פרטי.</main>;
+  if (!(await hasAdminSession())) redirect("/manage/login");
   return <ManageClient initial={await getSiteContent()} />;
 }
