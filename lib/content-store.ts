@@ -11,7 +11,15 @@ export async function getSiteContent(): Promise<SiteContent> {
     const saved = JSON.parse(row.content) as Partial<SiteContent>;
     const previousOrder = saved.sectionOrder || defaultSiteContent.sectionOrder;
     const sectionOrder = ["story", "welcome", "service", ...previousOrder.filter(id => !["story", "welcome", "service", "recognition"].includes(id))] as SiteContent["sectionOrder"];
-    const merged = {...defaultSiteContent, ...saved, opening:{...defaultSiteContent.opening,...saved.opening}, story:{...defaultSiteContent.story,...saved.story}, host:{...defaultSiteContent.host,...saved.host}, sectionOrder} as SiteContent;
+    const merged = {...defaultSiteContent, ...saved,
+      site:{...defaultSiteContent.site,...saved.site,navigation:saved.site?.navigation??defaultSiteContent.site.navigation},
+      opening:{...defaultSiteContent.opening,...saved.opening},
+      story:{...defaultSiteContent.story,...saved.story},
+      welcome:{...defaultSiteContent.welcome,...saved.welcome},
+      host:{...defaultSiteContent.host,...saved.host,comparison:saved.host?.comparison??defaultSiteContent.host.comparison},
+      service:{...defaultSiteContent.service,...saved.service},
+      food:{...defaultSiteContent.food,...saved.food,suppliers:saved.food?.suppliers??defaultSiteContent.food.suppliers},
+      sectionOrder} as SiteContent;
     const serviceOrder = ["שפע", "נראות", "זרימה", "תחושה"];
     merged.service = {
       ...merged.service,
