@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { getSiteContent } from "../lib/content-store";
 
-export const metadata: Metadata = {
-  title: "בשביל ההוויה | נוֹצֶרֶת מרחבי אירוח",
-  description:
-    "ניהול ותפעול מרחבי אירוח בזמן ההגשה, כדי שהנראות, השפע, הסדר והתחושה יישמרו לאורך האירוע כולו.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await getSiteContent();
+  return { title: content.site.browserTitle, description: content.site.description };
+}
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
