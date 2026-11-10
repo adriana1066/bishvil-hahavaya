@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { SectionId, SiteContent } from "../../lib/site-content";
 import "./manage.css";
 
@@ -17,21 +17,21 @@ const textKeys: Record<SectionId,Array<[string,string]>> = {
   process:[["kicker","כותרת קטנה"],["title","כותרת ראשית"]],
   contact:[["kicker","כותרת קטנה"],["title","כותרת ראשית"],["button","טקסט בכפתור"],["phone","טלפון"]]
 };
+const anchors: Record<PanelId,string> = {site:"top",opening:"opening-title",story:"story",welcome:"welcome",recognition:"top",host:"top",service:"service",promise:"top",events:"events",food:"top",process:"top",contact:"contact"};
 
 export default function ManageClient({initial}:{initial:SiteContent}) {
   const [content,setContent] = useState(initial); const [active,setActive] = useState<PanelId>("opening");
-  const [status,setStatus] = useState(""); const [busy,setBusy] = useState(false);
+  const [status,setStatus] = useState(""); const [busy,setBusy] = useState(false); const [previewKey,setPreviewKey] = useState(0);
   const section = content[active] as unknown as Record<string,unknown>;
   const setSection = (key:string,value:unknown) => setContent(c=>({...c,[active]:{...(c[active] as object),[key]:value}}));
   const move=(id:SectionId,delta:number)=>setContent(c=>{const a=[...c.sectionOrder],i=a.indexOf(id),j=i+delta;if(j<0||j>=a.length)return c;[a[i],a[j]]=[a[j],a[i]];return {...c,sectionOrder:a}});
   const toggle=(id:SectionId)=>setContent(c=>({...c,hiddenSections:c.hiddenSections.includes(id)?c.hiddenSections.filter(x=>x!==id):[...c.hiddenSections,id]}));
-  const save=async()=>{setBusy(true);setStatus("שומר...");const r=await fetch("/api/site-content",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(content)});setStatus(r.ok?"השינויים נשמרו באתר":"השמירה לא הצליחה");setBusy(false)};
+  const save=async()=>{setBusy(true);setStatus("שומר...");try{const r=await fetch("/api/site-content",{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(content)});if(!r.ok)throw new Error();setStatus("השינויים נשמרו ומופיעים בתצוגת האתר.");setPreviewKey(x=>x+1)}catch{setStatus("השמירה לא הצליחה. השינויים נשארו במסך ואפשר לנסות שוב.")}finally{setBusy(false)}};
   const upload=async(file:File,key="image")=>{setBusy(true);setStatus("מעלה תמונה...");const f=new FormData();f.append("file",file);const r=await fetch("/api/uploads",{method:"POST",body:f});const data=await r.json();if(r.ok){setSection(key,data.url);setStatus("התמונה נוספה. לחצי על שמירת השינויים.")}else setStatus(data.error||"העלאה נכשלה");setBusy(false)};
   const downloadBackup=()=>{const blob=new Blob([JSON.stringify(content,null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`bishvil-hahavaya-${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(url)};
   const importBackup=async(file:File)=>{try{const value=JSON.parse(await file.text()) as SiteContent;if(!value.site||!value.opening||!Array.isArray(value.sectionOrder))throw new Error();if(!window.confirm("להחליף את כל תוכן האתר בתוכן מקובץ הגיבוי?"))return;setContent(value);setStatus("הגיבוי נטען. לחצי על שמירת השינויים.")}catch{alert("הקובץ אינו גיבוי תקין של בשביל ההוויה.")}};
   const updateSiteList=(index:number,field:"label"|"href",value:string)=>setContent(x=>{const navigation=[...x.site.navigation];navigation[index]={...navigation[index],[field]:value};return {...x,site:{...x.site,navigation}}});
   const uploadWith=async(file:File,apply:(url:string)=>void)=>{setBusy(true);setStatus("מעלה קובץ...");const form=new FormData();form.append("file",file);const response=await fetch("/api/uploads",{method:"POST",body:form});const data=await response.json();if(response.ok){apply(data.url);setStatus("הקובץ נוסף. לחצי על שמירת השינויים.")}else setStatus(data.error||"העלאה נכשלה");setBusy(false)};
-  const previewTitle=useMemo(()=>String(section.title||section.kicker||labels[active]),[section,active]);
   const listKey = Array.isArray(section.items) ? "items" : null;
   const addListItem=()=>{const items=[...(section.items as Array<string|{title:string;text:string}>)];items.push(items.length&&typeof items[0]!=="string"?{title:"",text:""}:"");setSection("items",items)};
   const deleteListItem=(index:number)=>{const items=[...(section.items as Array<string|{title:string;text:string}>)];items.splice(index,1);setSection("items",items)};
@@ -54,7 +54,9 @@ export default function ManageClient({initial}:{initial:SiteContent}) {
         {listKey&&<div className="list-editor"><div className="products-heading"><h3>הרשימה באזור הזה</h3><button type="button" onClick={addListItem}>הוספת פריט</button></div>{(section.items as Array<string|{title:string;text:string}>).map((item,index)=><div className="list-item-editor" key={index}><div className="list-item-actions"><button type="button" disabled={index===0} onClick={()=>moveListItem(index,-1)}>↑</button><button type="button" disabled={index===(section.items as unknown[]).length-1} onClick={()=>moveListItem(index,1)}>↓</button><button type="button" onClick={()=>deleteListItem(index)}>מחיקה</button></div>{typeof item==="string"?<label>פריט {index+1}<textarea value={item} onChange={e=>{const a=[...(section.items as string[])];a[index]=e.target.value;setSection("items",a)}}/></label>:<div className="paired"><input value={item.title} onChange={e=>{const a=[...(section.items as {title:string;text:string}[])];a[index]={...a[index],title:e.target.value};setSection("items",a)}}/><textarea value={item.text} onChange={e=>{const a=[...(section.items as {title:string;text:string}[])];a[index]={...a[index],text:e.target.value};setSection("items",a)}}/></div>}</div>)}</div>}
         <p className="save-status" role="status">{status}</p>
       </section>
-      <aside className="mini-preview"><h2>כך התוכן נראה</h2>{"image" in section&&<img src={String(section.image)} alt=""/>}<p>{String(section.kicker||section.eyebrow||"")}</p><h3>{previewTitle}</h3><div>{String(section.text||section.text1||section.lead||section.accent||"")}</div><a href="/" target="_blank">לצפייה מלאה באתר ←</a></aside>
+      <aside className="mini-preview"><h2>תצוגת האתר עצמו</h2><p>אחרי שמירה, התצוגה נטענת מחדש מן האתר האמיתי — באותו עיצוב שבו המבקרים רואים אותו.</p><iframe key={`${previewKey}-${active}`} title={`תצוגה אמיתית: ${labels[active]}`} src={`/?editorPreview=${previewKey}#${anchors[active]}`}/><a href={`/#${anchors[active]}`} target="_blank">פתיחה בגודל מלא ←</a></aside>
     </div>
+    <div className="save-dock"><span role="status">{status||"השינויים נשארים במסך עד לשמירה"}</span><button type="button" onClick={save} disabled={busy}>{busy?"שומר...":"שמירת השינויים"}</button></div>
   </main>;
 }
+
