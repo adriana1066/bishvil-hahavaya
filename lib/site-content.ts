@@ -1,10 +1,13 @@
-export type SectionId = "story" | "welcome" | "recognition" | "host" | "service" | "promise" | "events" | "food" | "process" | "contact";
+export type SectionId = "story" | "welcome" | "recognition" | "host" | "comparison" | "aunt" | "service" | "promise" | "events" | "food" | "suppliers" | "process" | "contact";
+
+export type MediaSetting = { x:number; y:number; fit:"cover"|"contain" };
 
 export type SiteContent = {
   site: {
     browserTitle:string; description:string; brand:string;
-    navigation:Array<{label:string;href:string}>; whatsappNumber:string; whatsappMessage:string;
-    footerText:string; footerImage:string; footerAlt:string;
+    headerVisible:boolean; navigationVisible:boolean;
+    navigation:Array<{label:string;href:string;visible:boolean}>; whatsappNumber:string; whatsappMessage:string;
+    footerVisible:boolean; footerText:string; footerImage:string; footerAlt:string;
   };
   opening: {
     right: string; left: string; enter: string;
@@ -16,6 +19,7 @@ export type SiteContent = {
   };
   sectionOrder: SectionId[];
   hiddenSections: SectionId[];
+  mediaSettings: Record<string,MediaSetting>;
   story: { eyebrow: string; eyebrowSize: number; title: string; titleSize: number; titleY: number; accent: string; accentSize: number; accentY: number; titleBottom: number; text: string; textSize: number; image: string; imageAlt:string; visionLabel:string };
   welcome: { eyebrow: string; title: string; accent: string; text: string; image: string; video:string };
   recognition: { kicker: string; title: string; large: string; text1: string; text2: string };
@@ -31,10 +35,14 @@ export type SiteContent = {
 };
 
 export const defaultSiteContent: SiteContent = {
-  site:{browserTitle:"בשביל ההוויה | נוֹצֶרֶת מרחבי אירוח",description:"ניהול ותפעול מרחבי אירוח בזמן ההגשה, כדי שהנראות, השפע, הסדר והתחושה יישמרו לאורך האירוע כולו.",brand:"בשביל ההוויה",navigation:[{label:"החוויה",href:"#story"},{label:"נוצרת",href:"#service"},{label:"למי מתאים",href:"#events"},{label:"נדבר על האירוע",href:"#contact"}],whatsappNumber:"972546550816",whatsappMessage:"שלום אדריאנה, אשמח לשמוע עוד על שירות נצירת מרחב האירוח",footerText:"אדריאנה הראל · נוצרת מרחבי אירוח",footerImage:"/footer-logo.jpg",footerAlt:"בשביל ההוויה"},
+  site:{browserTitle:"בשביל ההוויה | נוֹצֶרֶת מרחבי אירוח",description:"ניהול ותפעול מרחבי אירוח בזמן ההגשה, כדי שהנראות, השפע, הסדר והתחושה יישמרו לאורך האירוע כולו.",brand:"בשביל ההוויה",headerVisible:true,navigationVisible:true,navigation:[{label:"החוויה",href:"#story",visible:true},{label:"נוצרת",href:"#service",visible:true},{label:"למי מתאים",href:"#events",visible:true},{label:"נדבר על האירוע",href:"#contact",visible:true}],whatsappNumber:"972546550816",whatsappMessage:"שלום אדריאנה, אשמח לשמוע עוד על שירות נצירת מרחב האירוח",footerVisible:true,footerText:"אדריאנה הראל · נוצרת מרחבי אירוח",footerImage:"/footer-logo.jpg",footerAlt:"בשביל ההוויה"},
   opening:{right:"נוצרת",left:"מרחבי אירוח",enter:"כל מה שיצרתם. כל מה שביקשתם להעניק.",rightX:4.5,rightY:13.5,rightSize:13.45,rightWidth:70,leftX:4.5,leftY:13.5,leftSize:13.45,leftWidth:47,logoWidth:75,logoBottom:0,desktopImage:"/opening-desktop-approved.png",mobileImage:"/opening-android-approved.png",imageAlt:"נוצרת מרחבי אירוח — בשביל ההוויה",journeyStart:"השביל",journeyBridge:"אל",journeyArrival:"האירוח החדש"},
-  sectionOrder:["story","welcome","service","host","events","food","promise","contact","process"],
-  hiddenSections:[],
+  sectionOrder:["story","welcome","service","host","comparison","aunt","events","food","suppliers","promise","contact","process","recognition"],
+  hiddenSections:["recognition"],
+  mediaSettings:{
+    story:{x:50,y:50,fit:"cover"},welcome:{x:50,y:50,fit:"cover"},service:{x:50,y:50,fit:"cover"},food:{x:50,y:50,fit:"cover"},footer:{x:50,y:50,fit:"contain"},
+    comparison0:{x:50,y:50,fit:"cover"},comparison1:{x:50,y:50,fit:"cover"},comparison2:{x:50,y:50,fit:"cover"},comparison3:{x:50,y:50,fit:"cover"}
+  },
   story:{eyebrow:"כל מה שיצרתם. כל מה שביקשתם להעניק.",eyebrowSize:1.6,title:"אירוע שלא רק מתחיל יפה.",titleSize:4,titleY:39,accent:"אירוע שנשאר.",accentSize:9,accentY:70,titleBottom:8,text:"כדי שגם כשהמרחב מתמלא חיים, הוא ימשיך לספר את אותו הסיפור.",textSize:3.5,image:"/event-table.jpg",imageAlt:"הדמיה של מרחב אירוח עשיר, חי ומזמין",visionLabel:"הדמיית חזון"},
   welcome:{eyebrow:"",video:"/welcome-event.mp4",title:"הגעתי לאירוע באיחור של שעה וחצי.",accent:"ונראה כאילו האירוע התחיל רק עכשיו!",text:"",image:"/event-table.jpg"},
   recognition:{kicker:"את מכירה את הרגע הזה",title:"בהתחלה הכול נראה בדיוק כפי שתכננת.",large:"ואז מגיעים בני אדם.",text1:"כלים זזים. קערות מתרוקנות. צלחות נגמרות. פינת הקפה משנה את צורתה.",text2:"זו אינה תקלה. זה מה שקורה כשאירוע חי. אבל ההשקעה, הנראות והתחושה שביקשת ליצור אינן חייבות להישחק יחד איתו."},

@@ -9,15 +9,22 @@ export async function getSiteContent(): Promise<SiteContent> {
     const row = await env.DB.prepare("SELECT content FROM site_content WHERE id = ?").bind("main").first<{content:string}>();
     if (!row) return defaultSiteContent;
     const saved = JSON.parse(row.content) as Partial<SiteContent>;
+    const oldOrder=saved.sectionOrder??defaultSiteContent.sectionOrder;
+    const expandedOrder=oldOrder.flatMap(id=>id==="host"?["host","comparison","aunt"]:id==="food"?["food","suppliers"]:id) as SiteContent["sectionOrder"];
+    const sectionOrder=[...new Set([...expandedOrder,...defaultSiteContent.sectionOrder])] as SiteContent["sectionOrder"];
+    const hiddenSections=[...new Set([...(saved.hiddenSections??[]),...(oldOrder.includes("recognition")?[]:["recognition" as const])])];
+    const navigation=(saved.site?.navigation??defaultSiteContent.site.navigation).map(item=>({...item,visible:item.visible!==false}));
     const merged = {...defaultSiteContent, ...saved,
-      site:{...defaultSiteContent.site,...saved.site,navigation:saved.site?.navigation??defaultSiteContent.site.navigation},
+      site:{...defaultSiteContent.site,...saved.site,navigation},
       opening:{...defaultSiteContent.opening,...saved.opening},
       story:{...defaultSiteContent.story,...saved.story},
       welcome:{...defaultSiteContent.welcome,...saved.welcome},
       host:{...defaultSiteContent.host,...saved.host,comparison:saved.host?.comparison??defaultSiteContent.host.comparison},
       service:{...defaultSiteContent.service,...saved.service},
       food:{...defaultSiteContent.food,...saved.food,suppliers:saved.food?.suppliers??defaultSiteContent.food.suppliers},
-      sectionOrder:saved.sectionOrder??defaultSiteContent.sectionOrder} as SiteContent;
+      mediaSettings:{...defaultSiteContent.mediaSettings,...saved.mediaSettings},
+      sectionOrder,
+      hiddenSections} as SiteContent;
     return merged;
   } catch { return defaultSiteContent; }
 }
