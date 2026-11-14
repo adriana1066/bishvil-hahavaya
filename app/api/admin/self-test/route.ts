@@ -5,6 +5,10 @@ import { getSiteContent, saveSiteContent } from "../../../../lib/content-store";
 
 type TestResult = { name: string; ok: boolean; detail: string };
 
+export function GET() {
+  return NextResponse.json({ version: 2 });
+}
+
 export async function POST(request: Request) {
   if (!(await hasAdminSession()))
     return NextResponse.json({ error: "אין הרשאה" }, { status: 403 });
