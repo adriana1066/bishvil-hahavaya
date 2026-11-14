@@ -142,12 +142,28 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
       const data = (await response.json()) as {
         ok?: boolean;
         error?: string;
+        liveBrand?: string;
         results?: Array<{ name: string; ok: boolean; detail: string }>;
       };
       if (!response.ok) throw new Error(data.error || "הבדיקה לא הצליחה");
+      const liveResponse = await fetch(`/?admin-live-check=${Date.now()}`, {
+        cache: "no-store",
+      });
+      const liveHtml = await liveResponse.text();
+      const liveOk =
+        liveResponse.ok &&
+        typeof data.liveBrand === "string" &&
+        liveHtml.includes(data.liveBrand);
       const failed = data.results?.filter((result) => !result.ok) ?? [];
+      if (!liveOk)
+        failed.push({
+          name: "האתר החי",
+          ok: false,
+          detail: "האתר החי לא החזיר את התוכן השמור",
+        });
+      const allOk = data.ok && liveOk;
       setStatus(
-        data.ok
+        allOk
           ? "הבדיקה המלאה הצליחה. כל הפעולות נשמרו, הופיעו באתר החי והתוכן המקורי שוחזר."
           : `הבדיקה הסתיימה עם בעיה: ${failed.map((result) => result.name).join(", ")}`,
       );
