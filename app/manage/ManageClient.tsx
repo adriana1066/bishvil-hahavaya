@@ -134,6 +134,32 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
       setBusy(false);
     }
   };
+  const runFullTest = async () => {
+    setBusy(true);
+    setStatus("מריץ בדיקה מלאה ושומר עותק בטוח של התוכן...");
+    try {
+      const response = await fetch("/api/admin/self-test", { method: "POST" });
+      const data = (await response.json()) as {
+        ok?: boolean;
+        error?: string;
+        results?: Array<{ name: string; ok: boolean; detail: string }>;
+      };
+      if (!response.ok) throw new Error(data.error || "הבדיקה לא הצליחה");
+      const failed = data.results?.filter((result) => !result.ok) ?? [];
+      setStatus(
+        data.ok
+          ? "הבדיקה המלאה הצליחה. כל הפעולות נשמרו, הופיעו באתר החי והתוכן המקורי שוחזר."
+          : `הבדיקה הסתיימה עם בעיה: ${failed.map((result) => result.name).join(", ")}`,
+      );
+      setPreviewKey((value) => value + 1);
+    } catch (error) {
+      setStatus(
+        error instanceof Error ? error.message : "הבדיקה האוטומטית נכשלה",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
   const upload = async (file: File, apply: (url: string) => void) => {
     setBusy(true);
     setStatus(`מעלה ${file.type.startsWith("video/") ? "סרטון" : "תמונה"}...`);
@@ -644,6 +670,9 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
           </a>
           <button onClick={save} disabled={busy}>
             שמירת כל השינויים
+          </button>
+          <button onClick={runFullTest} disabled={busy}>
+            בדיקה מלאה
           </button>
         </div>
       </header>
