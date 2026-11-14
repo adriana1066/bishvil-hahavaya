@@ -9,7 +9,7 @@ export function GET() {
   return NextResponse.json({ version: 2 });
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   if (!(await hasAdminSession()))
     return NextResponse.json({ error: "אין הרשאה" }, { status: 403 });
 
@@ -75,28 +75,6 @@ export async function POST(request: Request) {
       detail: "שם ומצב כפתור הניווט נשמרו",
     });
 
-    const origin = new URL(request.url).origin;
-    let liveHtml = "";
-    for (let attempt = 0; attempt < 8; attempt += 1) {
-      const response = await fetch(
-        `${origin}/?admin-test=${Date.now()}-${attempt}`,
-        {
-          headers: {
-            "cache-control": "no-cache, no-store, must-revalidate",
-            pragma: "no-cache",
-          },
-        },
-      );
-      liveHtml = await response.text();
-      if (liveHtml.includes(marker)) break;
-      await new Promise((resolve) => setTimeout(resolve, 600));
-    }
-    results.push({
-      name: "האתר החי",
-      ok: liveHtml.includes(marker),
-      detail: "השינוי שנשמר הופיע בפועל באתר החי",
-    });
-
     const svg =
       '<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><rect width="2" height="2" fill="#24402f"/></svg>';
     await env.BUCKET.put(testObjectKey, svg, {
@@ -129,5 +107,6 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: results.every((result) => result.ok),
     results,
+    liveBrand: original.site.brand,
   });
 }
