@@ -72,9 +72,21 @@ export async function POST(request: Request) {
     });
 
     const origin = new URL(request.url).origin;
-    const liveHtml = await fetch(`${origin}/?admin-test=${Date.now()}`, {
-      headers: { "cache-control": "no-cache" },
-    }).then((response) => response.text());
+    let liveHtml = "";
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const response = await fetch(
+        `${origin}/?admin-test=${Date.now()}-${attempt}`,
+        {
+          headers: {
+            "cache-control": "no-cache, no-store, must-revalidate",
+            pragma: "no-cache",
+          },
+        },
+      );
+      liveHtml = await response.text();
+      if (liveHtml.includes(marker)) break;
+      await new Promise((resolve) => setTimeout(resolve, 600));
+    }
     results.push({
       name: "האתר החי",
       ok: liveHtml.includes(marker),
