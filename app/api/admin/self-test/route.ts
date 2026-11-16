@@ -6,7 +6,7 @@ import { getSiteContent, saveSiteContent } from "../../../../lib/content-store";
 type TestResult = { name: string; ok: boolean; detail: string };
 
 export function GET() {
-  return NextResponse.json({ version: 3 });
+  return NextResponse.json({ version: 4 });
 }
 
 export async function POST() {
@@ -45,6 +45,26 @@ export async function POST() {
         ...original.mediaSettings,
         story: { ...original.mediaSettings.story, x: 37 },
       },
+      design: {
+        ...original.design,
+        eventsTemplate: original.design.eventsTemplate === "cards" ? "editorial" : "cards",
+      },
+      community: {
+        ...original.community,
+        collections: [
+          ...original.community.collections,
+          {
+            id: `collection-${marker}`,
+            visible: true,
+            kicker: "בדיקה",
+            title: marker,
+            description: "אוסף בדיקה זמני",
+            template: "square" as const,
+            columns: 3 as const,
+            items: [{id:`card-${marker}`,visible:true,title:marker,subtitle:"",summary:"",image:"/favicon.png",imageAlt:"בדיקה",slug:marker,body:"תוכן בדיקה",link:"",linkMode:"page" as const}],
+          },
+        ],
+      },
     };
 
     await saveSiteContent(changed);
@@ -73,6 +93,16 @@ export async function POST() {
       name: "כפתורי ניווט",
       ok: saved.site.navigation[0]?.label === marker,
       detail: "שם ומצב כפתור הניווט נשמרו",
+    });
+    results.push({
+      name: "בחירת תבנית",
+      ok: saved.design.eventsTemplate === changed.design.eventsTemplate,
+      detail: "בחירת תבנית העיצוב נשמרה",
+    });
+    results.push({
+      name: "אוספים וכרטיסים",
+      ok: saved.community.collections.some(collection => collection.title === marker && collection.items.some(item => item.title === marker)),
+      detail: "אוסף חדש, כרטיס ותוכן פנימי נשמרו",
     });
 
     const svg =

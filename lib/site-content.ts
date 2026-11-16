@@ -9,6 +9,7 @@ export type CardItem = {
 };
 
 export type CardCollection = {
+  id:string; visible:boolean;
   kicker:string; title:string; description:string; template:"square"|"portrait"|"story";
   columns:2|3|4; items:CardItem[];
 };
@@ -45,7 +46,7 @@ export type SiteContent = {
   events: { kicker: string; title: string; items: string[] };
   food: { kicker: string; title: string; text1: string; text2: string; image:string; imageAlt:string; suppliersTitle:string;
     suppliers:Array<{name:string;owner:string;image:string;imageAlt:string;specialty:string;fit:string;visible:boolean;slug:string;body:string;linkMode:"page"|"external"|"none";link:string;links:Array<{label:string;href:string}>}> };
-  community: CardCollection;
+  community: { kicker:string; title:string; description:string; collections:CardCollection[] };
   process: { kicker: string; title: string; items: string[] };
   contact: { kicker: string; title: string; button: string; phone: string };
 };
@@ -68,7 +69,7 @@ export const defaultSiteContent: SiteContent = {
   promise:{kicker:"מה נשאר בסוף",title:"לא רק שולחן שנשמר.",accent:"חוויה שנשארת בזיכרון.",items:["שליטה בלי שתצטרכי לשלוט.","פניות להיות עם האורחים.","אירוע שממשיך להיות כפי שתכננת.","הרושם שאנשים לוקחים איתם הביתה."]},
   events:{kicker:"למי זה מתאים",title:"לאירועים שחשובים מכדי להשאיר את החוויה ליד המקרה.",items:["אירועים משפחתיים משמעותיים","חתונות קטנות ואירוח אינטימי","אירוח חברתי בבית או במרחב נבחר","אירועים עסקיים ואירועי חברה","סדנאות, ריטריטים ומפגשי קבוצות"]},
   food:{kicker:"השפע שעל השולחן",title:"קולינריה עשירה, חגיגית ומפתיעה.",text1:"בעבודה שלי אני משרתת ארוחות צמחיות משובחות, ולשמחתי זה מאפשר לי, בין השאר, גם לעבוד עם הטבחים הנפלאים של העולם החדש.",text2:"אז אם עדיין לא בחרת מה יעלה על השולחן שלך באירוע – אני מזמינה אותך להכיר את המטבחים שמביאים את העולם הזה אלינו, לפגוש את המנות הנהדרות שנולדות בכל אחד מהם, ולבחור מתוכם את המטבח שהכי מתאים לאירוע הקרוב.",image:"/culinary-table.jpg",imageAlt:"שולחן אירוח עשיר עם מאפים, סלטים, פירות, עוגות ומשקאות",suppliersTitle:"ספקי אוכל שאני שמחה לחבר אל האירוע שלכם",suppliers:[{name:"ניבה בנטו",owner:"ניבה קרן־אור",image:"/niva-mango-cake.jpg",imageAlt:"עוגת מנגו טבעונית של ניבה בנטו",specialty:"קולינריה טבעונית צבעונית, נדיבה ומלאת דמיון.",fit:"קינוחים · אירוח קטן",visible:true,slug:"niva-bento",body:"",linkMode:"page",link:"",links:[{label:"אתר",href:"https://nivabento.com/"},{label:"אינסטגרם",href:"https://www.instagram.com/niva.bento/"},{label:"פייסבוק",href:"https://www.facebook.com/niva.bento/"},{label:"טיקטוק",href:"https://www.tiktok.com/@nivabento"}]}]},
-  community:{kicker:"הקהילה",title:"סיפורים, אנשים ורעיונות מן האירוח החדש",description:"",template:"square",columns:3,items:[]},
+  community:{kicker:"הקהילה",title:"סיפורים, אנשים ורעיונות מן האירוח החדש",description:"",collections:[{id:"community-stories",visible:true,kicker:"",title:"סיפורים מתוך החיים",description:"",template:"story",columns:2,items:[]}]},
   process:{kicker:"מכאן זה פשוט",title:"מתחילים בשיחה.",items:["כותבים לי בוואטסאפ כמה מילים על האירוע.","קובעים זמן נוח לשיחה ומבינים יחד מה דרוש.","ממלאים את פרטי האירוע ומקבלים הצעה מותאמת."]},
   contact:{kicker:"האירוע שלך",title:"את תהיי עם האורחים. אני אנצור את המרחב.",button:"לדבר עם אדריאנה בוואטסאפ",phone:"054-655-0816"}
 };

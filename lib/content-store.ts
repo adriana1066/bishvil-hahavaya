@@ -12,7 +12,7 @@ export async function getSiteContent(): Promise<SiteContent> {
     const oldOrder=saved.sectionOrder??defaultSiteContent.sectionOrder;
     const expandedOrder=oldOrder.flatMap(id=>id==="host"?["host","comparison","aunt"]:id==="food"?["food","suppliers"]:id) as SiteContent["sectionOrder"];
     const sectionOrder=[...new Set([...expandedOrder,...defaultSiteContent.sectionOrder])] as SiteContent["sectionOrder"];
-    const hiddenSections=[...new Set([...(saved.hiddenSections??[]),...(oldOrder.includes("recognition")?[]:["recognition" as const])])];
+    const hiddenSections=[...new Set([...(saved.hiddenSections??[]),...(oldOrder.includes("recognition")?[]:["recognition" as const]),...(oldOrder.includes("community")?[]:["community" as const])])];
     const navigation=(saved.site?.navigation??defaultSiteContent.site.navigation).map(item=>({...item,visible:item.visible!==false}));
     const merged = {...defaultSiteContent, ...saved,
       site:{...defaultSiteContent.site,...saved.site,navigation},
@@ -23,7 +23,7 @@ export async function getSiteContent(): Promise<SiteContent> {
       host:{...defaultSiteContent.host,...saved.host,comparison:saved.host?.comparison??defaultSiteContent.host.comparison},
       service:{...defaultSiteContent.service,...saved.service},
       food:{...defaultSiteContent.food,...saved.food,suppliers:(saved.food?.suppliers??defaultSiteContent.food.suppliers).map((supplier,index)=>({visible:true,slug:`supplier-${index+1}`,body:"",linkMode:"page" as const,link:"",...supplier}))},
-      community:{...defaultSiteContent.community,...saved.community,items:(saved.community?.items??defaultSiteContent.community.items).map((item,index)=>({id:`card-${index+1}`,visible:true,title:"",subtitle:"",summary:"",image:"",imageAlt:"",slug:`card-${index+1}`,body:"",link:"",linkMode:"page" as const,...item}))},
+      community:{...defaultSiteContent.community,...saved.community,collections:(saved.community?.collections??defaultSiteContent.community.collections).map((collection,collectionIndex)=>({id:`collection-${collectionIndex+1}`,visible:true,kicker:"",title:"אוסף כרטיסים",description:"",template:"square" as const,columns:3 as const,...collection,items:(collection.items??[]).map((item,index)=>({id:`card-${index+1}`,visible:true,title:"",subtitle:"",summary:"",image:"",imageAlt:"",slug:`card-${index+1}`,body:"",link:"",linkMode:"page" as const,...item}))}))},
       mediaSettings:{...defaultSiteContent.mediaSettings,...saved.mediaSettings},
       sectionOrder,
       hiddenSections} as SiteContent;
