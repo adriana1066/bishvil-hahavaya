@@ -557,6 +557,12 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
           ],
           (value)=>setContent(c=>({...c,design:{...c.design,eventsTemplate:value as SiteContent["design"]["eventsTemplate"]}})),
         )}
+        {id === "events" && <div className="list-editor event-items-editor"><h3>השורות והאייקונים המקוריים</h3>{content.events.items.map((item,i)=><div className="list-item-editor" key={`${item.text}-${i}`}>
+          <div className="list-item-actions"><button disabled={i===0} onClick={()=>{const a=[...content.events.items];[a[i-1],a[i]]=[a[i],a[i-1]];update("events","items",a)}}>↑</button><button disabled={i===content.events.items.length-1} onClick={()=>{const a=[...content.events.items];[a[i+1],a[i]]=[a[i],a[i+1]];update("events","items",a)}}>↓</button><button onClick={()=>update("events","items",content.events.items.filter((_,n)=>n!==i))}>מחיקה</button></div>
+          {field(`שורה ${i+1}`,item.text,(v)=>{const a=[...content.events.items];a[i]={...a[i],text:v};update("events","items",a)})}
+          <label>קבוצת האייקונים<select value={String(item.iconSet)} onChange={(e)=>{const a=[...content.events.items],value=e.target.value;a[i]={...a[i],iconSet:value==="none"?"none":Number(value) as 0|1|2|3|4};update("events","items",a)}}><option value="0">משפחה ולב משפחתי</option><option value="1">טבעות וחופה</option><option value="2">בית וכוסות</option><option value="3">לחיצת יד ושיחה</option><option value="4">מעגל, מנחה ומדורה</option><option value="none">ללא אייקונים</option></select></label>
+          {item.iconSet!=="none"&&<div className={`event-icons-preview event-icons-set-${item.iconSet}`} aria-label="תצוגת האייקונים"/>}
+        </div>)}<button className="add-button" onClick={()=>update("events","items",[...content.events.items,{text:"שורה חדשה",iconSet:"none"}])}>הוספת שורה</button></div>}
         {id === "suppliers" && (
           <>
             {field("כותרת אזור הספקים", content.food.suppliersTitle, (v) =>
@@ -757,7 +763,7 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
             <button className="add-button" onClick={()=>setContent(c=>({...c,community:{...c.community,collections:[...c.community.collections,{id:crypto.randomUUID(),visible:true,kicker:"",title:"אוסף חדש",description:"",template:"square",columns:3,items:[]}]}}))}>הוספת אוסף כרטיסים</button>
           </>
         )}
-        {Array.isArray(data.items) &&
+        {id !== "events" && Array.isArray(data.items) &&
           itemList(
             id,
             data.items as Array<string | { title: string; text: string }>,
