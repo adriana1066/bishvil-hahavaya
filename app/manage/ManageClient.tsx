@@ -19,6 +19,7 @@ const labels: Record<SectionId, string> = {
   events: "למי זה מתאים",
   food: "קולינריה",
   suppliers: "ספקי האוכל",
+  community: "הקהילה — אוספי כרטיסים",
   process: "איך מתחילים",
   contact: "יצירת קשר",
 };
@@ -61,6 +62,11 @@ const sectionText: Partial<Record<SectionId, Array<[string, string]>>> = {
   events: [
     ["kicker", "כותרת קטנה"],
     ["title", "כותרת ראשית"],
+  ],
+  community: [
+    ["kicker", "כותרת קטנה"],
+    ["title", "כותרת האוסף"],
+    ["description", "תיאור קצר"],
   ],
   food: [
     ["kicker", "כותרת קטנה"],
@@ -280,6 +286,25 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
         }
       />
     </label>
+  );
+  const templateChoice = (
+    label: string,
+    value: string,
+    choices: Array<{ value: string; title: string; description: string }>,
+    onChange: (value: string) => void,
+  ) => (
+    <fieldset className="template-picker">
+      <legend>{label}</legend>
+      <div>
+        {choices.map((choice) => (
+          <label className={value === choice.value ? "selected" : ""} key={choice.value}>
+            <input type="radio" checked={value === choice.value} onChange={() => onChange(choice.value)} />
+            <strong>{choice.title}</strong>
+            <span>{choice.description}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
   );
   const itemList = (
     id: SectionId,
@@ -522,10 +547,29 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
             {mediaControl("food")}
           </>
         )}
+        {id === "events" && templateChoice(
+          "צורת התצוגה של הרשימה",
+          content.design.eventsTemplate,
+          [
+            {value:"editorial",title:"שורות מערכת",description:"שורות רחבות, קווי הפרדה ומספור עדין"},
+            {value:"cards",title:"כרטיסים רכים",description:"פריטים שווים זה לצד זה"},
+            {value:"compact",title:"רשימה נקייה",description:"תצוגה קצרה וצפופה יותר"},
+          ],
+          (value)=>setContent(c=>({...c,design:{...c.design,eventsTemplate:value as SiteContent["design"]["eventsTemplate"]}})),
+        )}
         {id === "suppliers" && (
           <>
             {field("כותרת אזור הספקים", content.food.suppliersTitle, (v) =>
               update("food", "suppliersTitle", v),
+            )}
+            {templateChoice(
+              "צורת התצוגה של השפים והספקים",
+              content.design.suppliersTemplate,
+              [
+                {value:"cards",title:"כרטיסים שווים",description:"תמונה, שם ושורה קצרה; לחיצה פותחת את התוכן"},
+                {value:"table",title:"רשימה מפורטת",description:"כל הפרטים והקישורים מוצגים יחד"},
+              ],
+              (value)=>setContent(c=>({...c,design:{...c.design,suppliersTemplate:value as SiteContent["design"]["suppliersTemplate"]}})),
             )}
             {content.food.suppliers.map((s, i) => (
               <div className="supplier-editor" key={i}>
@@ -562,8 +606,13 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
                     מחיקה
                   </button>
                 </div>
+                <label className="switch">
+                  <input type="checkbox" checked={s.visible !== false} onChange={(e)=>{
+                    const a=[...content.food.suppliers]; a[i]={...a[i],visible:e.target.checked}; update("food","suppliers",a);
+                  }}/>{" "}הכרטיס מוצג באתר
+                </label>
                 {(
-                  ["name", "owner", "specialty", "fit", "imageAlt"] as const
+                  ["name", "owner", "specialty", "fit", "imageAlt", "slug"] as const
                 ).map((k) =>
                   field(
                     {
@@ -572,6 +621,7 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
                       specialty: "מה מביאים לשולחן",
                       fit: "מתאים ל־",
                       imageAlt: "תיאור התמונה",
+                      slug: "שם קצר לכתובת העמוד (באנגלית)",
                     }[k],
                     s[k],
                     (v) => {
@@ -585,6 +635,22 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
                   const a = [...content.food.suppliers];
                   a[i] = { ...a[i], image: v };
                   update("food", "suppliers", a);
+                })}
+                {mediaControl(`supplier${i}`)}
+                {field("התוכן המלא בעמוד של השף או הספק", s.body, (v)=>{
+                  const a=[...content.food.suppliers]; a[i]={...a[i],body:v}; update("food","suppliers",a);
+                },6)}
+                <label>מה נפתח בלחיצה על הכרטיס
+                  <select value={s.linkMode} onChange={(e)=>{
+                    const a=[...content.food.suppliers]; a[i]={...a[i],linkMode:e.target.value as typeof s.linkMode}; update("food","suppliers",a);
+                  }}>
+                    <option value="page">עמוד פנימי באתר</option>
+                    <option value="external">קישור חיצוני</option>
+                    <option value="none">ללא קישור</option>
+                  </select>
+                </label>
+                {s.linkMode === "external" && field("כתובת הקישור החיצוני",s.link,(v)=>{
+                  const a=[...content.food.suppliers]; a[i]={...a[i],link:v}; update("food","suppliers",a);
                 })}
                 <h4>קישורים</h4>
                 {s.links.map((l, j) => (
@@ -656,6 +722,11 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
                     imageAlt: "",
                     specialty: "",
                     fit: "",
+                    visible: true,
+                    slug: `supplier-${content.food.suppliers.length + 1}`,
+                    body: "",
+                    linkMode: "page",
+                    link: "",
                     links: [],
                   },
                 ])
@@ -663,6 +734,40 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
             >
               הוספת ספק
             </button>
+          </>
+        )}
+        {id === "community" && (
+          <>
+            {templateChoice(
+              "תבנית הכרטיסים",
+              content.community.template,
+              [
+                {value:"square",title:"ריבועים שווים",description:"מתאים לאנשים, משתתפים ונושאים"},
+                {value:"portrait",title:"כרטיסי דיוקן",description:"תמונה אנכית עם שם ותיאור"},
+                {value:"story",title:"כרטיסי סיפור",description:"תמונה רחבה וכותרת בולטת"},
+              ],
+              (value)=>setContent(c=>({...c,community:{...c.community,template:value as SiteContent["community"]["template"]}})),
+            )}
+            <label>מספר כרטיסים בשורה במחשב
+              <select value={content.community.columns} onChange={(e)=>setContent(c=>({...c,community:{...c.community,columns:Number(e.target.value) as 2|3|4}}))}>
+                <option value="2">שניים</option><option value="3">שלושה</option><option value="4">ארבעה</option>
+              </select>
+            </label>
+            {content.community.items.map((item,i)=><div className="supplier-editor" key={item.id}>
+              <div className="list-item-actions">
+                <button disabled={i===0} onClick={()=>{const a=[...content.community.items];[a[i-1],a[i]]=[a[i],a[i-1]];setContent(c=>({...c,community:{...c.community,items:a}}));}}>↑</button>
+                <button disabled={i===content.community.items.length-1} onClick={()=>{const a=[...content.community.items];[a[i+1],a[i]]=[a[i],a[i+1]];setContent(c=>({...c,community:{...c.community,items:a}}));}}>↓</button>
+                <button onClick={()=>setContent(c=>({...c,community:{...c.community,items:c.community.items.filter((_,n)=>n!==i)}}))}>מחיקה</button>
+              </div>
+              <label className="switch"><input type="checkbox" checked={item.visible} onChange={(e)=>{const a=[...content.community.items];a[i]={...a[i],visible:e.target.checked};setContent(c=>({...c,community:{...c.community,items:a}}));}}/> הכרטיס מוצג באתר</label>
+              {([['title','כותרת'],['subtitle','כותרת משנה'],['summary','תקציר'],['slug','שם קצר לכתובת העמוד (באנגלית)'],['imageAlt','תיאור התמונה']] as const).map(([key,label])=>field(label,item[key],(v)=>{const a=[...content.community.items];a[i]={...a[i],[key]:v};setContent(c=>({...c,community:{...c.community,items:a}}));},key==='summary'?3:2))}
+              {fileField("תמונת הכרטיס",item.image,"image/*",(v)=>{const a=[...content.community.items];a[i]={...a[i],image:v};setContent(c=>({...c,community:{...c.community,items:a}}));})}
+              {mediaControl(`community${i}`)}
+              {field("התוכן המלא בעמוד",item.body,(v)=>{const a=[...content.community.items];a[i]={...a[i],body:v};setContent(c=>({...c,community:{...c.community,items:a}}));},7)}
+              <label>מה נפתח בלחיצה<select value={item.linkMode} onChange={(e)=>{const a=[...content.community.items];a[i]={...a[i],linkMode:e.target.value as typeof item.linkMode};setContent(c=>({...c,community:{...c.community,items:a}}));}}><option value="page">עמוד פנימי באתר</option><option value="external">קישור חיצוני</option><option value="none">ללא קישור</option></select></label>
+              {item.linkMode==='external'&&field("כתובת הקישור",item.link,(v)=>{const a=[...content.community.items];a[i]={...a[i],link:v};setContent(c=>({...c,community:{...c.community,items:a}}));})}
+            </div>)}
+            <button className="add-button" onClick={()=>setContent(c=>({...c,community:{...c.community,items:[...c.community.items,{id:crypto.randomUUID(),visible:true,title:"כרטיס חדש",subtitle:"",summary:"",image:"",imageAlt:"",slug:`card-${c.community.items.length+1}`,body:"",link:"",linkMode:"page"}]}}))}>הוספת כרטיס</button>
           </>
         )}
         {Array.isArray(data.items) &&

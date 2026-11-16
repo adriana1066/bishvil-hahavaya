@@ -1,6 +1,17 @@
-export type SectionId = "story" | "welcome" | "recognition" | "host" | "comparison" | "aunt" | "service" | "promise" | "events" | "food" | "suppliers" | "process" | "contact";
+export type SectionId = "story" | "welcome" | "recognition" | "host" | "comparison" | "aunt" | "service" | "promise" | "events" | "food" | "suppliers" | "community" | "process" | "contact";
 
 export type MediaSetting = { x:number; y:number; fit:"cover"|"contain" };
+
+export type CardItem = {
+  id:string; visible:boolean; title:string; subtitle:string; summary:string;
+  image:string; imageAlt:string; slug:string; body:string; link:string;
+  linkMode:"page"|"external"|"none";
+};
+
+export type CardCollection = {
+  kicker:string; title:string; description:string; template:"square"|"portrait"|"story";
+  columns:2|3|4; items:CardItem[];
+};
 
 export type SiteContent = {
   site: {
@@ -20,6 +31,10 @@ export type SiteContent = {
   sectionOrder: SectionId[];
   hiddenSections: SectionId[];
   mediaSettings: Record<string,MediaSetting>;
+  design: {
+    eventsTemplate:"editorial"|"cards"|"compact";
+    suppliersTemplate:"cards"|"table";
+  };
   story: { eyebrow: string; eyebrowSize: number; title: string; titleSize: number; titleY: number; accent: string; accentSize: number; accentY: number; titleBottom: number; text: string; textSize: number; image: string; imageAlt:string; visionLabel:string };
   welcome: { eyebrow: string; title: string; accent: string; text: string; image: string; video:string };
   recognition: { kicker: string; title: string; large: string; text1: string; text2: string };
@@ -29,7 +44,8 @@ export type SiteContent = {
   promise: { kicker: string; title: string; accent: string; items: string[] };
   events: { kicker: string; title: string; items: string[] };
   food: { kicker: string; title: string; text1: string; text2: string; image:string; imageAlt:string; suppliersTitle:string;
-    suppliers:Array<{name:string;owner:string;image:string;imageAlt:string;specialty:string;fit:string;links:Array<{label:string;href:string}>}> };
+    suppliers:Array<{name:string;owner:string;image:string;imageAlt:string;specialty:string;fit:string;visible:boolean;slug:string;body:string;linkMode:"page"|"external"|"none";link:string;links:Array<{label:string;href:string}>}> };
+  community: CardCollection;
   process: { kicker: string; title: string; items: string[] };
   contact: { kicker: string; title: string; button: string; phone: string };
 };
@@ -37,8 +53,9 @@ export type SiteContent = {
 export const defaultSiteContent: SiteContent = {
   site:{browserTitle:"בשביל ההוויה | נוֹצֶרֶת מרחבי אירוח",description:"ניהול ותפעול מרחבי אירוח בזמן ההגשה, כדי שהנראות, השפע, הסדר והתחושה יישמרו לאורך האירוע כולו.",brand:"בשביל ההוויה",headerVisible:true,navigationVisible:true,navigation:[{label:"החוויה",href:"#story",visible:true},{label:"נוצרת",href:"#service",visible:true},{label:"למי מתאים",href:"#events",visible:true},{label:"נדבר על האירוע",href:"#contact",visible:true}],whatsappNumber:"972546550816",whatsappMessage:"שלום אדריאנה, אשמח לשמוע עוד על שירות נצירת מרחב האירוח",footerVisible:true,footerText:"אדריאנה הראל · נוצרת מרחבי אירוח",footerImage:"/footer-logo.jpg",footerAlt:"בשביל ההוויה"},
   opening:{right:"נוצרת",left:"מרחבי אירוח",enter:"כל מה שיצרתם. כל מה שביקשתם להעניק.",rightX:4.5,rightY:13.5,rightSize:13.45,rightWidth:70,leftX:4.5,leftY:13.5,leftSize:13.45,leftWidth:47,logoWidth:75,logoBottom:0,desktopImage:"/opening-desktop-approved.png",mobileImage:"/opening-android-approved.png",imageAlt:"נוצרת מרחבי אירוח — בשביל ההוויה",journeyStart:"השביל",journeyBridge:"אל",journeyArrival:"האירוח החדש"},
-  sectionOrder:["story","welcome","service","host","comparison","aunt","events","food","suppliers","promise","contact","process","recognition"],
-  hiddenSections:["recognition"],
+  sectionOrder:["story","welcome","service","host","comparison","aunt","events","food","suppliers","promise","contact","process","community","recognition"],
+  hiddenSections:["community","recognition"],
+  design:{eventsTemplate:"editorial",suppliersTemplate:"cards"},
   mediaSettings:{
     story:{x:50,y:50,fit:"cover"},welcome:{x:50,y:50,fit:"cover"},service:{x:50,y:50,fit:"cover"},food:{x:50,y:50,fit:"cover"},footer:{x:50,y:50,fit:"contain"},
     comparison0:{x:50,y:50,fit:"cover"},comparison1:{x:50,y:50,fit:"cover"},comparison2:{x:50,y:50,fit:"cover"},comparison3:{x:50,y:50,fit:"cover"}
@@ -50,7 +67,8 @@ export const defaultSiteContent: SiteContent = {
   service:{kicker:"יש לזה שם",title:"נוצרת מרחבי אירוח.",origin:"מלשון לנצור — לשמור על דבר יקר.",lead:"אני אדריאנה הראל. התפקיד שלי מתחיל ברגע שבו מרחב האירוח מוכן להיפתח לכניסתם של האורחים.",image:"/adriana-yellow.jpg",imageAlt:"אדריאנה הראל בשמלה צהובה בתוך אירוע",items:[{title:"שפע",text:"אני שומרת שהעמדות יישארו יפות מסודרות ומזמינות לאורך ההגשה."},{title:"נראות",text:"אני רואה את התמונה השלמה וגם את הפרטים הקטנים שנשחקים בתוכה."},{title:"זרימה",text:"אני פועלת בתוך השינוי הטבעי ומטפלת במה שנדרש לפני שהוא הופך להפרעה."},{title:"תחושה",text:"אני נוצרת את מה שהמארחים ביקשו להעניק - לאורך כל האירוע, עד אחרון האורחים."}]},
   promise:{kicker:"מה נשאר בסוף",title:"לא רק שולחן שנשמר.",accent:"חוויה שנשארת בזיכרון.",items:["שליטה בלי שתצטרכי לשלוט.","פניות להיות עם האורחים.","אירוע שממשיך להיות כפי שתכננת.","הרושם שאנשים לוקחים איתם הביתה."]},
   events:{kicker:"למי זה מתאים",title:"לאירועים שחשובים מכדי להשאיר את החוויה ליד המקרה.",items:["אירועים משפחתיים משמעותיים","חתונות קטנות ואירוח אינטימי","אירוח חברתי בבית או במרחב נבחר","אירועים עסקיים ואירועי חברה","סדנאות, ריטריטים ומפגשי קבוצות"]},
-  food:{kicker:"השפע שעל השולחן",title:"קולינריה עשירה, חגיגית ומפתיעה.",text1:"בעבודה שלי אני משרתת ארוחות צמחיות משובחות, ולשמחתי זה מאפשר לי, בין השאר, גם לעבוד עם הטבחים הנפלאים של העולם החדש.",text2:"אז אם עדיין לא בחרת מה יעלה על השולחן שלך באירוע – אני מזמינה אותך להכיר את המטבחים שמביאים את העולם הזה אלינו, לפגוש את המנות הנהדרות שנולדות בכל אחד מהם, ולבחור מתוכם את המטבח שהכי מתאים לאירוע הקרוב.",image:"/culinary-table.jpg",imageAlt:"שולחן אירוח עשיר עם מאפים, סלטים, פירות, עוגות ומשקאות",suppliersTitle:"ספקי אוכל שאני שמחה לחבר אל האירוע שלכם",suppliers:[{name:"ניבה בנטו",owner:"ניבה קרן־אור",image:"/niva-mango-cake.jpg",imageAlt:"עוגת מנגו טבעונית של ניבה בנטו",specialty:"קולינריה טבעונית צבעונית, נדיבה ומלאת דמיון.",fit:"קינוחים · אירוח קטן",links:[{label:"אתר",href:"https://nivabento.com/"},{label:"אינסטגרם",href:"https://www.instagram.com/niva.bento/"},{label:"פייסבוק",href:"https://www.facebook.com/niva.bento/"},{label:"טיקטוק",href:"https://www.tiktok.com/@nivabento"}]}]},
+  food:{kicker:"השפע שעל השולחן",title:"קולינריה עשירה, חגיגית ומפתיעה.",text1:"בעבודה שלי אני משרתת ארוחות צמחיות משובחות, ולשמחתי זה מאפשר לי, בין השאר, גם לעבוד עם הטבחים הנפלאים של העולם החדש.",text2:"אז אם עדיין לא בחרת מה יעלה על השולחן שלך באירוע – אני מזמינה אותך להכיר את המטבחים שמביאים את העולם הזה אלינו, לפגוש את המנות הנהדרות שנולדות בכל אחד מהם, ולבחור מתוכם את המטבח שהכי מתאים לאירוע הקרוב.",image:"/culinary-table.jpg",imageAlt:"שולחן אירוח עשיר עם מאפים, סלטים, פירות, עוגות ומשקאות",suppliersTitle:"ספקי אוכל שאני שמחה לחבר אל האירוע שלכם",suppliers:[{name:"ניבה בנטו",owner:"ניבה קרן־אור",image:"/niva-mango-cake.jpg",imageAlt:"עוגת מנגו טבעונית של ניבה בנטו",specialty:"קולינריה טבעונית צבעונית, נדיבה ומלאת דמיון.",fit:"קינוחים · אירוח קטן",visible:true,slug:"niva-bento",body:"",linkMode:"page",link:"",links:[{label:"אתר",href:"https://nivabento.com/"},{label:"אינסטגרם",href:"https://www.instagram.com/niva.bento/"},{label:"פייסבוק",href:"https://www.facebook.com/niva.bento/"},{label:"טיקטוק",href:"https://www.tiktok.com/@nivabento"}]}]},
+  community:{kicker:"הקהילה",title:"סיפורים, אנשים ורעיונות מן האירוח החדש",description:"",template:"square",columns:3,items:[]},
   process:{kicker:"מכאן זה פשוט",title:"מתחילים בשיחה.",items:["כותבים לי בוואטסאפ כמה מילים על האירוע.","קובעים זמן נוח לשיחה ומבינים יחד מה דרוש.","ממלאים את פרטי האירוע ומקבלים הצעה מותאמת."]},
   contact:{kicker:"האירוע שלך",title:"את תהיי עם האורחים. אני אנצור את המרחב.",button:"לדבר עם אדריאנה בוואטסאפ",phone:"054-655-0816"}
 };
