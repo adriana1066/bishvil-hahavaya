@@ -22,7 +22,7 @@ export async function getSiteContent(): Promise<SiteContent> {
       welcome:{...defaultSiteContent.welcome,...saved.welcome},
       host:{...defaultSiteContent.host,...saved.host,comparison:saved.host?.comparison??defaultSiteContent.host.comparison},
       service:{...defaultSiteContent.service,...saved.service},
-      events:{...defaultSiteContent.events,...saved.events,items:(saved.events?.items??defaultSiteContent.events.items).map((item,index)=>typeof item==="string"?{text:item,iconSet:(index<5?index:"none") as 0|1|2|3|4|"none"}:item)},
+      events:{...defaultSiteContent.events,...saved.events,items:(saved.events?.items??defaultSiteContent.events.items).map((item,index)=>typeof item==="string"?{text:item,iconSet:(index<5?index:"none") as 0|1|2|3|4|"none",iconSize:100,iconX:0,iconY:0}:{iconSize:100,iconX:0,iconY:0,...item})},
       food:{...defaultSiteContent.food,...saved.food,suppliers:(saved.food?.suppliers??defaultSiteContent.food.suppliers).map((supplier,index)=>({visible:true,slug:`supplier-${index+1}`,body:"",linkMode:"page" as const,link:"",...supplier}))},
       community:{...defaultSiteContent.community,...saved.community,collections:(saved.community?.collections??defaultSiteContent.community.collections).map((collection,collectionIndex)=>({id:`collection-${collectionIndex+1}`,visible:true,kicker:"",title:"אוסף כרטיסים",description:"",template:"square" as const,columns:3 as const,...collection,items:(collection.items??[]).map((item,index)=>({id:`card-${index+1}`,visible:true,title:"",subtitle:"",summary:"",image:"",imageAlt:"",slug:`card-${index+1}`,body:"",link:"",linkMode:"page" as const,...item}))}))},
       mediaSettings:{...defaultSiteContent.mediaSettings,...saved.mediaSettings},
