@@ -561,8 +561,16 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
           <div className="list-item-actions"><button disabled={i===0} onClick={()=>{const a=[...content.events.items];[a[i-1],a[i]]=[a[i],a[i-1]];update("events","items",a)}}>↑</button><button disabled={i===content.events.items.length-1} onClick={()=>{const a=[...content.events.items];[a[i+1],a[i]]=[a[i],a[i+1]];update("events","items",a)}}>↓</button><button onClick={()=>update("events","items",content.events.items.filter((_,n)=>n!==i))}>מחיקה</button></div>
           {field(`שורה ${i+1}`,item.text,(v)=>{const a=[...content.events.items];a[i]={...a[i],text:v};update("events","items",a)})}
           <label>קבוצת האייקונים<select value={String(item.iconSet)} onChange={(e)=>{const a=[...content.events.items],value=e.target.value;a[i]={...a[i],iconSet:value==="none"?"none":Number(value) as 0|1|2|3|4};update("events","items",a)}}><option value="0">משפחה ולב משפחתי</option><option value="1">טבעות וחופה</option><option value="2">בית וכוסות</option><option value="3">לחיצת יד ושיחה</option><option value="4">מעגל, מנחה ומדורה</option><option value="none">ללא אייקונים</option></select></label>
-          {item.iconSet!=="none"&&<div className={`event-icons-preview event-icons-set-${item.iconSet}`} aria-label="תצוגת האייקונים"/>}
-        </div>)}<button className="add-button" onClick={()=>update("events","items",[...content.events.items,{text:"שורה חדשה",iconSet:"none"}])}>הוספת שורה</button></div>}
+          {item.iconSet!=="none"&&<>
+            <div className="event-icon-controls">
+              <label>גודל האייקונים <output>{item.iconSize}%</output><input type="range" min="60" max="160" step="5" value={item.iconSize} onChange={(e)=>{const a=[...content.events.items];a[i]={...a[i],iconSize:Number(e.target.value)};update("events","items",a)}}/></label>
+              <label>מיקום לרוחב <output>{item.iconX===0?"מרכז":item.iconX>0?`${item.iconX} ימינה`:`${Math.abs(item.iconX)} שמאלה`}</output><input type="range" min="-80" max="80" step="2" value={item.iconX} onChange={(e)=>{const a=[...content.events.items];a[i]={...a[i],iconX:Number(e.target.value)};update("events","items",a)}}/></label>
+              <label>מיקום לגובה <output>{item.iconY===0?"מרכז":item.iconY>0?`${item.iconY} למטה`:`${Math.abs(item.iconY)} למעלה`}</output><input type="range" min="-30" max="30" step="1" value={item.iconY} onChange={(e)=>{const a=[...content.events.items];a[i]={...a[i],iconY:Number(e.target.value)};update("events","items",a)}}/></label>
+              <button type="button" onClick={()=>{const a=[...content.events.items];a[i]={...a[i],iconSize:100,iconX:0,iconY:0};update("events","items",a)}}>איפוס גודל ומיקום</button>
+            </div>
+            <div className="event-preview-frame"><div className={`event-icons-preview event-icons-set-${item.iconSet}`} style={{transform:`translate(${item.iconX}px, ${item.iconY}px) scale(${item.iconSize/100})`}} aria-label="תצוגת האייקונים"/></div>
+          </>}
+        </div>)}<button className="add-button" onClick={()=>update("events","items",[...content.events.items,{text:"שורה חדשה",iconSet:"none",iconSize:100,iconX:0,iconY:0}])}>הוספת שורה</button></div>}
         {id === "suppliers" && (
           <>
             {field("כותרת אזור הספקים", content.food.suppliersTitle, (v) =>
