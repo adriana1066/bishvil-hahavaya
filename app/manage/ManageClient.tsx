@@ -183,25 +183,6 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
       setBusy(false);
     }
   };
-  const upload = async (file: File, apply: (url: string) => void) => {
-    setBusy(true);
-    setStatus(`מעלה ${file.type.startsWith("video/") ? "סרטון" : "תמונה"}...`);
-    try {
-      const form = new FormData();
-      form.append("file", file);
-      const r = await fetch("/api/uploads", { method: "POST", body: form });
-      const data = await r.json();
-      if (!r.ok) throw new Error(data.error);
-      apply(data.url);
-      setStatus("הקובץ הועלה. לחצי על שמירת השינויים כדי לפרסם אותו באתר.");
-    } catch (e) {
-      setStatus(
-        e instanceof Error && e.message ? e.message : "העלאת הקובץ נכשלה",
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
   const typographyControl = (styleKey: string) => {
     const style = content.textStyles[styleKey] ?? {};
     const setStyle = (patch: Partial<TextStyle>) =>
@@ -445,7 +426,7 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
   const fileField = (
     label: string,
     value: string,
-    accept: string,
+    _accept: string,
     onValue: (v: string) => void,
   ) => (
     <label className="file-field">
@@ -454,13 +435,6 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
         dir="ltr"
         value={value}
         onChange={(e) => onValue(e.target.value)}
-      />
-      <input
-        type="file"
-        accept={accept}
-        onChange={(e) =>
-          e.target.files?.[0] && upload(e.target.files[0], onValue)
-        }
       />
     </label>
   );
