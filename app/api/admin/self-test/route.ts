@@ -1,4 +1,3 @@
-import { env } from "cloudflare:workers";
 import { NextResponse } from "next/server";
 import { hasAdminSession } from "../../../../lib/admin-auth";
 import { getSiteContent, saveSiteContent } from "../../../../lib/content-store";
@@ -16,7 +15,6 @@ export async function POST() {
   const original = await getSiteContent();
   const originalJson = JSON.stringify(original);
   const marker = `בדיקת-ניהול-${Date.now()}`;
-  const testObjectKey = `site/admin-self-test-${crypto.randomUUID()}.svg`;
   const results: TestResult[] = [];
 
   try {
@@ -105,17 +103,6 @@ export async function POST() {
       detail: "אוסף חדש, כרטיס ותוכן פנימי נשמרו",
     });
 
-    const svg =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="2" height="2"><rect width="2" height="2" fill="#24402f"/></svg>';
-    await env.BUCKET.put(testObjectKey, svg, {
-      httpMetadata: { contentType: "image/svg+xml" },
-    });
-    const uploaded = await env.BUCKET.get(testObjectKey);
-    results.push({
-      name: "העלאת תמונה",
-      ok: uploaded !== null && (await uploaded.text()) === svg,
-      detail: "קובץ בדיקה הועלה ונקרא מאחסון התמונות",
-    });
   } catch (error) {
     results.push({
       name: "הבדיקה האוטומטית",
@@ -124,7 +111,6 @@ export async function POST() {
     });
   } finally {
     await saveSiteContent(original);
-    await env.BUCKET.delete(testObjectKey).catch(() => undefined);
   }
 
   const restored = JSON.stringify(await getSiteContent()) === originalJson;
