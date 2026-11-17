@@ -4,6 +4,7 @@ import type {
   MediaSetting,
   SectionId,
   SiteContent,
+  TextStyle,
 } from "../../lib/site-content";
 import "./manage.css";
 
@@ -201,20 +202,196 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
       setBusy(false);
     }
   };
+  const typographyControl = (styleKey: string) => {
+    const style = content.textStyles[styleKey] ?? {};
+    const setStyle = (patch: Partial<TextStyle>) =>
+      setContent((current) => ({
+        ...current,
+        textStyles: {
+          ...current.textStyles,
+          [styleKey]: { ...(current.textStyles[styleKey] ?? {}), ...patch },
+        },
+      }));
+    const reset = () =>
+      setContent((current) => {
+        const textStyles = { ...current.textStyles };
+        delete textStyles[styleKey];
+        return { ...current, textStyles };
+      });
+    return (
+      <details className="typography-control">
+        <summary>עיצוב הכתב</summary>
+        <div className="typography-toolbar">
+          <label>
+            סוג הכתב
+            <select
+              value={style.fontFamily ?? "inherit"}
+              onChange={(e) =>
+                setStyle({
+                  fontFamily: e.target.value as TextStyle["fontFamily"],
+                })
+              }
+            >
+              <option value="inherit">עיצוב האתר</option>
+              <option value="display">הכתב הכותרתי</option>
+              <option value="sans">כתב נקי</option>
+              <option value="serif">כתב ספרותי</option>
+            </select>
+          </label>
+          <label>
+            גודל
+            <span className="number-with-unit">
+              <input
+                type="number"
+                min="8"
+                max="180"
+                value={style.fontSize ?? ""}
+                placeholder="ברירת מחדל"
+                onChange={(e) =>
+                  setStyle({
+                    fontSize: e.target.value
+                      ? Number(e.target.value)
+                      : undefined,
+                  })
+                }
+              />
+              <span>פיקסלים</span>
+            </span>
+          </label>
+          <label>
+            עובי
+            <select
+              value={style.fontWeight ?? "inherit"}
+              onChange={(e) =>
+                setStyle({
+                  fontWeight: e.target.value as TextStyle["fontWeight"],
+                })
+              }
+            >
+              <option value="inherit">עיצוב האתר</option>
+              <option value="400">רגיל</option>
+              <option value="500">בינוני</option>
+              <option value="600">מודגש</option>
+              <option value="700">מודגש מאוד</option>
+              <option value="800">כבד</option>
+            </select>
+          </label>
+          <div className="type-buttons" aria-label="הדגשה וסגנון">
+            <button
+              type="button"
+              className={style.italic ? "active" : ""}
+              onClick={() => setStyle({ italic: !style.italic })}
+            >
+              <i>נטוי</i>
+            </button>
+            <button
+              type="button"
+              className={style.underline ? "active" : ""}
+              onClick={() => setStyle({ underline: !style.underline })}
+            >
+              <u>קו תחתי</u>
+            </button>
+          </div>
+          <label>
+            צבע
+            <span className="color-control">
+              <input
+                type="color"
+                value={
+                  style.color && /^#[0-9a-f]{6}$/i.test(style.color)
+                    ? style.color
+                    : "#201916"
+                }
+                onChange={(e) => setStyle({ color: e.target.value })}
+              />
+              <input
+                dir="ltr"
+                value={style.color ?? ""}
+                placeholder="צבע האתר"
+                onChange={(e) => setStyle({ color: e.target.value })}
+              />
+            </span>
+          </label>
+          <label>
+            יישור
+            <select
+              value={style.textAlign ?? "inherit"}
+              onChange={(e) =>
+                setStyle({
+                  textAlign: e.target.value as TextStyle["textAlign"],
+                })
+              }
+            >
+              <option value="inherit">עיצוב האתר</option>
+              <option value="right">ימין</option>
+              <option value="center">מרכז</option>
+              <option value="left">שמאל</option>
+            </select>
+          </label>
+          <label>
+            ריווח בין שורות
+            <input
+              type="number"
+              min="0.7"
+              max="3"
+              step="0.1"
+              value={style.lineHeight ?? ""}
+              placeholder="ברירת מחדל"
+              onChange={(e) =>
+                setStyle({
+                  lineHeight: e.target.value
+                    ? Number(e.target.value)
+                    : undefined,
+                })
+              }
+            />
+          </label>
+          <label>
+            ריווח בין אותיות
+            <span className="number-with-unit">
+              <input
+                type="number"
+                min="-5"
+                max="20"
+                step="0.5"
+                value={style.letterSpacing ?? ""}
+                placeholder="ברירת מחדל"
+                onChange={(e) =>
+                  setStyle({
+                    letterSpacing: e.target.value
+                      ? Number(e.target.value)
+                      : undefined,
+                  })
+                }
+              />
+              <span>פיקסלים</span>
+            </span>
+          </label>
+          <button type="button" className="reset-type" onClick={reset}>
+            איפוס לעיצוב המקורי
+          </button>
+        </div>
+      </details>
+    );
+  };
   const field = (
     label: string,
     value: string,
     onChange: (v: string) => void,
     rows = 2,
+    styleKey?: string,
   ) => (
-    <label>
-      {label}
-      <textarea
-        rows={rows}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    </label>
+    <div className="text-field">
+      <label>
+        {label}
+        <textarea
+          rows={rows}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      </label>
+      {styleKey && typographyControl(styleKey)}
+    </div>
   );
   const mediaControl = (key: string) => {
     const m = content.mediaSettings[key] ?? {
@@ -297,8 +474,15 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
       <legend>{label}</legend>
       <div>
         {choices.map((choice) => (
-          <label className={value === choice.value ? "selected" : ""} key={choice.value}>
-            <input type="radio" checked={value === choice.value} onChange={() => onChange(choice.value)} />
+          <label
+            className={value === choice.value ? "selected" : ""}
+            key={choice.value}
+          >
+            <input
+              type="radio"
+              checked={value === choice.value}
+              onChange={() => onChange(choice.value)}
+            />
             <strong>{choice.title}</strong>
             <span>{choice.description}</span>
           </label>
@@ -348,11 +532,17 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
             </button>
           </div>
           {typeof item === "string" ? (
-            field(`פריט ${i + 1}`, item, (v) => {
-              const a = [...items] as string[];
-              a[i] = v;
-              update(id, "items", a);
-            })
+            field(
+              `פריט ${i + 1}`,
+              item,
+              (v) => {
+                const a = [...items] as string[];
+                a[i] = v;
+                update(id, "items", a);
+              },
+              2,
+              `${id}.items.${i}`,
+            )
           ) : (
             <div className="paired">
               <input
@@ -373,6 +563,8 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
                   update(id, "items", a);
                 }}
               />
+              {typographyControl(`${id}.items.${i}.title`)}
+              {typographyControl(`${id}.items.${i}.text`)}
             </div>
           )}
         </div>
@@ -411,6 +603,7 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
             String(data[key] ?? ""),
             (v) => update(id, key, v),
             String(data[key] ?? "").length > 90 ? 5 : 2,
+            `${id}.${key}`,
           ),
         )}
         {id === "story" && (
@@ -547,43 +740,252 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
             {mediaControl("food")}
           </>
         )}
-        {id === "events" && templateChoice(
-          "צורת התצוגה של הרשימה",
-          content.design.eventsTemplate,
-          [
-            {value:"editorial",title:"שורות מערכת",description:"שורות רחבות, קווי הפרדה ומספור עדין"},
-            {value:"cards",title:"כרטיסים רכים",description:"פריטים שווים זה לצד זה"},
-            {value:"compact",title:"רשימה נקייה",description:"תצוגה קצרה וצפופה יותר"},
-          ],
-          (value)=>setContent(c=>({...c,design:{...c.design,eventsTemplate:value as SiteContent["design"]["eventsTemplate"]}})),
+        {id === "events" &&
+          templateChoice(
+            "צורת התצוגה של הרשימה",
+            content.design.eventsTemplate,
+            [
+              {
+                value: "editorial",
+                title: "שורות מערכת",
+                description: "שורות רחבות, קווי הפרדה ומספור עדין",
+              },
+              {
+                value: "cards",
+                title: "כרטיסים רכים",
+                description: "פריטים שווים זה לצד זה",
+              },
+              {
+                value: "compact",
+                title: "רשימה נקייה",
+                description: "תצוגה קצרה וצפופה יותר",
+              },
+            ],
+            (value) =>
+              setContent((c) => ({
+                ...c,
+                design: {
+                  ...c.design,
+                  eventsTemplate:
+                    value as SiteContent["design"]["eventsTemplate"],
+                },
+              })),
+          )}
+        {id === "events" && (
+          <div className="list-editor event-items-editor">
+            <h3>השורות והאייקונים המקוריים</h3>
+            {content.events.items.map((item, i) => (
+              <div className="list-item-editor" key={`${item.text}-${i}`}>
+                <div className="list-item-actions">
+                  <button
+                    disabled={i === 0}
+                    onClick={() => {
+                      const a = [...content.events.items];
+                      [a[i - 1], a[i]] = [a[i], a[i - 1]];
+                      update("events", "items", a);
+                    }}
+                  >
+                    ↑
+                  </button>
+                  <button
+                    disabled={i === content.events.items.length - 1}
+                    onClick={() => {
+                      const a = [...content.events.items];
+                      [a[i + 1], a[i]] = [a[i], a[i + 1]];
+                      update("events", "items", a);
+                    }}
+                  >
+                    ↓
+                  </button>
+                  <button
+                    onClick={() =>
+                      update(
+                        "events",
+                        "items",
+                        content.events.items.filter((_, n) => n !== i),
+                      )
+                    }
+                  >
+                    מחיקה
+                  </button>
+                </div>
+                {field(
+                  `שורה ${i + 1}`,
+                  item.text,
+                  (v) => {
+                    const a = [...content.events.items];
+                    a[i] = { ...a[i], text: v };
+                    update("events", "items", a);
+                  },
+                  2,
+                  `events.items.${i}.text`,
+                )}
+                <label>
+                  קבוצת האייקונים
+                  <select
+                    value={String(item.iconSet)}
+                    onChange={(e) => {
+                      const a = [...content.events.items],
+                        value = e.target.value;
+                      a[i] = {
+                        ...a[i],
+                        iconSet:
+                          value === "none"
+                            ? "none"
+                            : (Number(value) as 0 | 1 | 2 | 3 | 4),
+                      };
+                      update("events", "items", a);
+                    }}
+                  >
+                    <option value="0">משפחה ולב משפחתי</option>
+                    <option value="1">טבעות וחופה</option>
+                    <option value="2">בית וכוסות</option>
+                    <option value="3">לחיצת יד ושיחה</option>
+                    <option value="4">מעגל, מנחה ומדורה</option>
+                    <option value="none">ללא אייקונים</option>
+                  </select>
+                </label>
+                {item.iconSet !== "none" && (
+                  <>
+                    <div className="event-icon-controls">
+                      <label>
+                        גודל האייקונים <output>{item.iconSize}%</output>
+                        <input
+                          type="range"
+                          min="60"
+                          max="160"
+                          step="5"
+                          value={item.iconSize}
+                          onChange={(e) => {
+                            const a = [...content.events.items];
+                            a[i] = {
+                              ...a[i],
+                              iconSize: Number(e.target.value),
+                            };
+                            update("events", "items", a);
+                          }}
+                        />
+                      </label>
+                      <label>
+                        מיקום לרוחב{" "}
+                        <output>
+                          {item.iconX === 0
+                            ? "מרכז"
+                            : item.iconX > 0
+                              ? `${item.iconX} ימינה`
+                              : `${Math.abs(item.iconX)} שמאלה`}
+                        </output>
+                        <input
+                          type="range"
+                          min="-80"
+                          max="80"
+                          step="2"
+                          value={item.iconX}
+                          onChange={(e) => {
+                            const a = [...content.events.items];
+                            a[i] = { ...a[i], iconX: Number(e.target.value) };
+                            update("events", "items", a);
+                          }}
+                        />
+                      </label>
+                      <label>
+                        מיקום לגובה{" "}
+                        <output>
+                          {item.iconY === 0
+                            ? "מרכז"
+                            : item.iconY > 0
+                              ? `${item.iconY} למטה`
+                              : `${Math.abs(item.iconY)} למעלה`}
+                        </output>
+                        <input
+                          type="range"
+                          min="-30"
+                          max="30"
+                          step="1"
+                          value={item.iconY}
+                          onChange={(e) => {
+                            const a = [...content.events.items];
+                            a[i] = { ...a[i], iconY: Number(e.target.value) };
+                            update("events", "items", a);
+                          }}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const a = [...content.events.items];
+                          a[i] = { ...a[i], iconSize: 100, iconX: 0, iconY: 0 };
+                          update("events", "items", a);
+                        }}
+                      >
+                        איפוס גודל ומיקום
+                      </button>
+                    </div>
+                    <div className="event-preview-frame">
+                      <div
+                        className={`event-icons-preview event-icons-set-${item.iconSet}`}
+                        style={{
+                          transform: `translate(${item.iconX}px, ${item.iconY}px) scale(${item.iconSize / 100})`,
+                        }}
+                        aria-label="תצוגת האייקונים"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+            ))}
+            <button
+              className="add-button"
+              onClick={() =>
+                update("events", "items", [
+                  ...content.events.items,
+                  {
+                    text: "שורה חדשה",
+                    iconSet: "none",
+                    iconSize: 100,
+                    iconX: 0,
+                    iconY: 0,
+                  },
+                ])
+              }
+            >
+              הוספת שורה
+            </button>
+          </div>
         )}
-        {id === "events" && <div className="list-editor event-items-editor"><h3>השורות והאייקונים המקוריים</h3>{content.events.items.map((item,i)=><div className="list-item-editor" key={`${item.text}-${i}`}>
-          <div className="list-item-actions"><button disabled={i===0} onClick={()=>{const a=[...content.events.items];[a[i-1],a[i]]=[a[i],a[i-1]];update("events","items",a)}}>↑</button><button disabled={i===content.events.items.length-1} onClick={()=>{const a=[...content.events.items];[a[i+1],a[i]]=[a[i],a[i+1]];update("events","items",a)}}>↓</button><button onClick={()=>update("events","items",content.events.items.filter((_,n)=>n!==i))}>מחיקה</button></div>
-          {field(`שורה ${i+1}`,item.text,(v)=>{const a=[...content.events.items];a[i]={...a[i],text:v};update("events","items",a)})}
-          <label>קבוצת האייקונים<select value={String(item.iconSet)} onChange={(e)=>{const a=[...content.events.items],value=e.target.value;a[i]={...a[i],iconSet:value==="none"?"none":Number(value) as 0|1|2|3|4};update("events","items",a)}}><option value="0">משפחה ולב משפחתי</option><option value="1">טבעות וחופה</option><option value="2">בית וכוסות</option><option value="3">לחיצת יד ושיחה</option><option value="4">מעגל, מנחה ומדורה</option><option value="none">ללא אייקונים</option></select></label>
-          {item.iconSet!=="none"&&<>
-            <div className="event-icon-controls">
-              <label>גודל האייקונים <output>{item.iconSize}%</output><input type="range" min="60" max="160" step="5" value={item.iconSize} onChange={(e)=>{const a=[...content.events.items];a[i]={...a[i],iconSize:Number(e.target.value)};update("events","items",a)}}/></label>
-              <label>מיקום לרוחב <output>{item.iconX===0?"מרכז":item.iconX>0?`${item.iconX} ימינה`:`${Math.abs(item.iconX)} שמאלה`}</output><input type="range" min="-80" max="80" step="2" value={item.iconX} onChange={(e)=>{const a=[...content.events.items];a[i]={...a[i],iconX:Number(e.target.value)};update("events","items",a)}}/></label>
-              <label>מיקום לגובה <output>{item.iconY===0?"מרכז":item.iconY>0?`${item.iconY} למטה`:`${Math.abs(item.iconY)} למעלה`}</output><input type="range" min="-30" max="30" step="1" value={item.iconY} onChange={(e)=>{const a=[...content.events.items];a[i]={...a[i],iconY:Number(e.target.value)};update("events","items",a)}}/></label>
-              <button type="button" onClick={()=>{const a=[...content.events.items];a[i]={...a[i],iconSize:100,iconX:0,iconY:0};update("events","items",a)}}>איפוס גודל ומיקום</button>
-            </div>
-            <div className="event-preview-frame"><div className={`event-icons-preview event-icons-set-${item.iconSet}`} style={{transform:`translate(${item.iconX}px, ${item.iconY}px) scale(${item.iconSize/100})`}} aria-label="תצוגת האייקונים"/></div>
-          </>}
-        </div>)}<button className="add-button" onClick={()=>update("events","items",[...content.events.items,{text:"שורה חדשה",iconSet:"none",iconSize:100,iconX:0,iconY:0}])}>הוספת שורה</button></div>}
         {id === "suppliers" && (
           <>
-            {field("כותרת אזור הספקים", content.food.suppliersTitle, (v) =>
-              update("food", "suppliersTitle", v),
+            {field(
+              "כותרת אזור הספקים",
+              content.food.suppliersTitle,
+              (v) => update("food", "suppliersTitle", v),
+              2,
+              "food.suppliersTitle",
             )}
             {templateChoice(
               "צורת התצוגה של השפים והספקים",
               content.design.suppliersTemplate,
               [
-                {value:"cards",title:"כרטיסים שווים",description:"תמונה, שם ושורה קצרה; לחיצה פותחת את התוכן"},
-                {value:"table",title:"רשימה מפורטת",description:"כל הפרטים והקישורים מוצגים יחד"},
+                {
+                  value: "cards",
+                  title: "כרטיסים שווים",
+                  description: "תמונה, שם ושורה קצרה; לחיצה פותחת את התוכן",
+                },
+                {
+                  value: "table",
+                  title: "רשימה מפורטת",
+                  description: "כל הפרטים והקישורים מוצגים יחד",
+                },
               ],
-              (value)=>setContent(c=>({...c,design:{...c.design,suppliersTemplate:value as SiteContent["design"]["suppliersTemplate"]}})),
+              (value) =>
+                setContent((c) => ({
+                  ...c,
+                  design: {
+                    ...c.design,
+                    suppliersTemplate:
+                      value as SiteContent["design"]["suppliersTemplate"],
+                  },
+                })),
             )}
             {content.food.suppliers.map((s, i) => (
               <div className="supplier-editor" key={i}>
@@ -621,12 +1023,26 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
                   </button>
                 </div>
                 <label className="switch">
-                  <input type="checkbox" checked={s.visible !== false} onChange={(e)=>{
-                    const a=[...content.food.suppliers]; a[i]={...a[i],visible:e.target.checked}; update("food","suppliers",a);
-                  }}/>{" "}הכרטיס מוצג באתר
+                  <input
+                    type="checkbox"
+                    checked={s.visible !== false}
+                    onChange={(e) => {
+                      const a = [...content.food.suppliers];
+                      a[i] = { ...a[i], visible: e.target.checked };
+                      update("food", "suppliers", a);
+                    }}
+                  />{" "}
+                  הכרטיס מוצג באתר
                 </label>
                 {(
-                  ["name", "owner", "specialty", "fit", "imageAlt", "slug"] as const
+                  [
+                    "name",
+                    "owner",
+                    "specialty",
+                    "fit",
+                    "imageAlt",
+                    "slug",
+                  ] as const
                 ).map((k) =>
                   field(
                     {
@@ -643,6 +1059,10 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
                       a[i] = { ...a[i], [k]: v };
                       update("food", "suppliers", a);
                     },
+                    2,
+                    ["name", "owner", "specialty", "fit"].includes(k)
+                      ? `food.suppliers.${i}.${k}`
+                      : undefined,
                   ),
                 )}
                 {fileField("תמונת הספק", s.image, "image/*", (v) => {
@@ -651,21 +1071,40 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
                   update("food", "suppliers", a);
                 })}
                 {mediaControl(`supplier${i}`)}
-                {field("התוכן המלא בעמוד של השף או הספק", s.body, (v)=>{
-                  const a=[...content.food.suppliers]; a[i]={...a[i],body:v}; update("food","suppliers",a);
-                },6)}
-                <label>מה נפתח בלחיצה על הכרטיס
-                  <select value={s.linkMode} onChange={(e)=>{
-                    const a=[...content.food.suppliers]; a[i]={...a[i],linkMode:e.target.value as typeof s.linkMode}; update("food","suppliers",a);
-                  }}>
+                {field(
+                  "התוכן המלא בעמוד של השף או הספק",
+                  s.body,
+                  (v) => {
+                    const a = [...content.food.suppliers];
+                    a[i] = { ...a[i], body: v };
+                    update("food", "suppliers", a);
+                  },
+                  6,
+                )}
+                <label>
+                  מה נפתח בלחיצה על הכרטיס
+                  <select
+                    value={s.linkMode}
+                    onChange={(e) => {
+                      const a = [...content.food.suppliers];
+                      a[i] = {
+                        ...a[i],
+                        linkMode: e.target.value as typeof s.linkMode,
+                      };
+                      update("food", "suppliers", a);
+                    }}
+                  >
                     <option value="page">עמוד פנימי באתר</option>
                     <option value="external">קישור חיצוני</option>
                     <option value="none">ללא קישור</option>
                   </select>
                 </label>
-                {s.linkMode === "external" && field("כתובת הקישור החיצוני",s.link,(v)=>{
-                  const a=[...content.food.suppliers]; a[i]={...a[i],link:v}; update("food","suppliers",a);
-                })}
+                {s.linkMode === "external" &&
+                  field("כתובת הקישור החיצוני", s.link, (v) => {
+                    const a = [...content.food.suppliers];
+                    a[i] = { ...a[i], link: v };
+                    update("food", "suppliers", a);
+                  })}
                 <h4>קישורים</h4>
                 {s.links.map((l, j) => (
                   <div className="linked-row" key={j}>
@@ -752,26 +1191,442 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
         )}
         {id === "community" && (
           <>
-            {content.community.collections.map((collection,collectionIndex)=><div className="collection-editor" key={collection.id}>
-              <div className="list-item-actions"><button disabled={collectionIndex===0} onClick={()=>setContent(c=>{const a=[...c.community.collections];[a[collectionIndex-1],a[collectionIndex]]=[a[collectionIndex],a[collectionIndex-1]];return {...c,community:{...c.community,collections:a}}})}>↑</button><button disabled={collectionIndex===content.community.collections.length-1} onClick={()=>setContent(c=>{const a=[...c.community.collections];[a[collectionIndex+1],a[collectionIndex]]=[a[collectionIndex],a[collectionIndex+1]];return {...c,community:{...c.community,collections:a}}})}>↓</button><button onClick={()=>setContent(c=>({...c,community:{...c.community,collections:c.community.collections.filter((_,n)=>n!==collectionIndex)}}))}>מחיקת האוסף</button></div>
-              <label className="switch"><input type="checkbox" checked={collection.visible} onChange={(e)=>setContent(c=>{const a=[...c.community.collections];a[collectionIndex]={...a[collectionIndex],visible:e.target.checked};return {...c,community:{...c.community,collections:a}}})}/> האוסף מוצג באתר</label>
-              {([['kicker','כותרת קטנה'],['title','שם האוסף'],['description','תיאור האוסף']] as const).map(([key,label])=>field(label,collection[key],(v)=>setContent(c=>{const a=[...c.community.collections];a[collectionIndex]={...a[collectionIndex],[key]:v};return {...c,community:{...c.community,collections:a}}}),key==='description'?3:2))}
-              {templateChoice("תבנית הכרטיסים",collection.template,[{value:"square",title:"ריבועים שווים",description:"מתאים לאנשים, משתתפים ונושאים"},{value:"portrait",title:"כרטיסי דיוקן",description:"תמונה אנכית עם שם ותיאור"},{value:"story",title:"כרטיסי סיפור",description:"תמונה רחבה וכותרת בולטת"}],(value)=>setContent(c=>{const a=[...c.community.collections];a[collectionIndex]={...a[collectionIndex],template:value as typeof collection.template};return {...c,community:{...c.community,collections:a}}}))}
-              <label>מספר כרטיסים בשורה במחשב<select value={collection.columns} onChange={(e)=>setContent(c=>{const a=[...c.community.collections];a[collectionIndex]={...a[collectionIndex],columns:Number(e.target.value) as 2|3|4};return {...c,community:{...c.community,collections:a}}})}><option value="2">שניים</option><option value="3">שלושה</option><option value="4">ארבעה</option></select></label>
-              {collection.items.map((item,i)=><div className="supplier-editor" key={item.id}><div className="list-item-actions"><button disabled={i===0} onClick={()=>setContent(c=>{const collections=[...c.community.collections],items=[...collections[collectionIndex].items];[items[i-1],items[i]]=[items[i],items[i-1]];collections[collectionIndex]={...collections[collectionIndex],items};return {...c,community:{...c.community,collections}}})}>↑</button><button disabled={i===collection.items.length-1} onClick={()=>setContent(c=>{const collections=[...c.community.collections],items=[...collections[collectionIndex].items];[items[i+1],items[i]]=[items[i],items[i+1]];collections[collectionIndex]={...collections[collectionIndex],items};return {...c,community:{...c.community,collections}}})}>↓</button><button onClick={()=>setContent(c=>{const collections=[...c.community.collections];collections[collectionIndex]={...collections[collectionIndex],items:collections[collectionIndex].items.filter((_,n)=>n!==i)};return {...c,community:{...c.community,collections}}})}>מחיקה</button></div>
-                <label className="switch"><input type="checkbox" checked={item.visible} onChange={(e)=>setContent(c=>{const collections=[...c.community.collections],items=[...collections[collectionIndex].items];items[i]={...items[i],visible:e.target.checked};collections[collectionIndex]={...collections[collectionIndex],items};return {...c,community:{...c.community,collections}}})}/> הכרטיס מוצג באתר</label>
-                {([['title','כותרת'],['subtitle','כותרת משנה'],['summary','תקציר'],['slug','שם קצר לכתובת העמוד (באנגלית)'],['imageAlt','תיאור התמונה']] as const).map(([key,label])=>field(label,item[key],(v)=>setContent(c=>{const collections=[...c.community.collections],items=[...collections[collectionIndex].items];items[i]={...items[i],[key]:v};collections[collectionIndex]={...collections[collectionIndex],items};return {...c,community:{...c.community,collections}}}),key==='summary'?3:2))}
-                {fileField("תמונת הכרטיס",item.image,"image/*",(v)=>setContent(c=>{const collections=[...c.community.collections],items=[...collections[collectionIndex].items];items[i]={...items[i],image:v};collections[collectionIndex]={...collections[collectionIndex],items};return {...c,community:{...c.community,collections}}}))}{mediaControl(`community${collectionIndex}-${i}`)}
-                {field("התוכן המלא בעמוד",item.body,(v)=>setContent(c=>{const collections=[...c.community.collections],items=[...collections[collectionIndex].items];items[i]={...items[i],body:v};collections[collectionIndex]={...collections[collectionIndex],items};return {...c,community:{...c.community,collections}}}),7)}
-                <label>מה נפתח בלחיצה<select value={item.linkMode} onChange={(e)=>setContent(c=>{const collections=[...c.community.collections],items=[...collections[collectionIndex].items];items[i]={...items[i],linkMode:e.target.value as typeof item.linkMode};collections[collectionIndex]={...collections[collectionIndex],items};return {...c,community:{...c.community,collections}}})}><option value="page">עמוד פנימי באתר</option><option value="external">קישור חיצוני</option><option value="none">ללא קישור</option></select></label>
-                {item.linkMode==='external'&&field("כתובת הקישור",item.link,(v)=>setContent(c=>{const collections=[...c.community.collections],items=[...collections[collectionIndex].items];items[i]={...items[i],link:v};collections[collectionIndex]={...collections[collectionIndex],items};return {...c,community:{...c.community,collections}}}))}
-              </div>)}
-              <button className="add-button" onClick={()=>setContent(c=>{const collections=[...c.community.collections],items=[...collections[collectionIndex].items,{id:crypto.randomUUID(),visible:true,title:"כרטיס חדש",subtitle:"",summary:"",image:"",imageAlt:"",slug:`card-${collection.items.length+1}`,body:"",link:"",linkMode:"page" as const}];collections[collectionIndex]={...collections[collectionIndex],items};return {...c,community:{...c.community,collections}}})}>הוספת כרטיס לאוסף</button>
-            </div>)}
-            <button className="add-button" onClick={()=>setContent(c=>({...c,community:{...c.community,collections:[...c.community.collections,{id:crypto.randomUUID(),visible:true,kicker:"",title:"אוסף חדש",description:"",template:"square",columns:3,items:[]}]}}))}>הוספת אוסף כרטיסים</button>
+            {content.community.collections.map(
+              (collection, collectionIndex) => (
+                <div className="collection-editor" key={collection.id}>
+                  <div className="list-item-actions">
+                    <button
+                      disabled={collectionIndex === 0}
+                      onClick={() =>
+                        setContent((c) => {
+                          const a = [...c.community.collections];
+                          [a[collectionIndex - 1], a[collectionIndex]] = [
+                            a[collectionIndex],
+                            a[collectionIndex - 1],
+                          ];
+                          return {
+                            ...c,
+                            community: { ...c.community, collections: a },
+                          };
+                        })
+                      }
+                    >
+                      ↑
+                    </button>
+                    <button
+                      disabled={
+                        collectionIndex ===
+                        content.community.collections.length - 1
+                      }
+                      onClick={() =>
+                        setContent((c) => {
+                          const a = [...c.community.collections];
+                          [a[collectionIndex + 1], a[collectionIndex]] = [
+                            a[collectionIndex],
+                            a[collectionIndex + 1],
+                          ];
+                          return {
+                            ...c,
+                            community: { ...c.community, collections: a },
+                          };
+                        })
+                      }
+                    >
+                      ↓
+                    </button>
+                    <button
+                      onClick={() =>
+                        setContent((c) => ({
+                          ...c,
+                          community: {
+                            ...c.community,
+                            collections: c.community.collections.filter(
+                              (_, n) => n !== collectionIndex,
+                            ),
+                          },
+                        }))
+                      }
+                    >
+                      מחיקת האוסף
+                    </button>
+                  </div>
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      checked={collection.visible}
+                      onChange={(e) =>
+                        setContent((c) => {
+                          const a = [...c.community.collections];
+                          a[collectionIndex] = {
+                            ...a[collectionIndex],
+                            visible: e.target.checked,
+                          };
+                          return {
+                            ...c,
+                            community: { ...c.community, collections: a },
+                          };
+                        })
+                      }
+                    />{" "}
+                    האוסף מוצג באתר
+                  </label>
+                  {(
+                    [
+                      ["kicker", "כותרת קטנה"],
+                      ["title", "שם האוסף"],
+                      ["description", "תיאור האוסף"],
+                    ] as const
+                  ).map(([key, label]) =>
+                    field(
+                      label,
+                      collection[key],
+                      (v) =>
+                        setContent((c) => {
+                          const a = [...c.community.collections];
+                          a[collectionIndex] = {
+                            ...a[collectionIndex],
+                            [key]: v,
+                          };
+                          return {
+                            ...c,
+                            community: { ...c.community, collections: a },
+                          };
+                        }),
+                      key === "description" ? 3 : 2,
+                      `community.collections.${collectionIndex}.${key}`,
+                    ),
+                  )}
+                  {templateChoice(
+                    "תבנית הכרטיסים",
+                    collection.template,
+                    [
+                      {
+                        value: "square",
+                        title: "ריבועים שווים",
+                        description: "מתאים לאנשים, משתתפים ונושאים",
+                      },
+                      {
+                        value: "portrait",
+                        title: "כרטיסי דיוקן",
+                        description: "תמונה אנכית עם שם ותיאור",
+                      },
+                      {
+                        value: "story",
+                        title: "כרטיסי סיפור",
+                        description: "תמונה רחבה וכותרת בולטת",
+                      },
+                    ],
+                    (value) =>
+                      setContent((c) => {
+                        const a = [...c.community.collections];
+                        a[collectionIndex] = {
+                          ...a[collectionIndex],
+                          template: value as typeof collection.template,
+                        };
+                        return {
+                          ...c,
+                          community: { ...c.community, collections: a },
+                        };
+                      }),
+                  )}
+                  <label>
+                    מספר כרטיסים בשורה במחשב
+                    <select
+                      value={collection.columns}
+                      onChange={(e) =>
+                        setContent((c) => {
+                          const a = [...c.community.collections];
+                          a[collectionIndex] = {
+                            ...a[collectionIndex],
+                            columns: Number(e.target.value) as 2 | 3 | 4,
+                          };
+                          return {
+                            ...c,
+                            community: { ...c.community, collections: a },
+                          };
+                        })
+                      }
+                    >
+                      <option value="2">שניים</option>
+                      <option value="3">שלושה</option>
+                      <option value="4">ארבעה</option>
+                    </select>
+                  </label>
+                  {collection.items.map((item, i) => (
+                    <div className="supplier-editor" key={item.id}>
+                      <div className="list-item-actions">
+                        <button
+                          disabled={i === 0}
+                          onClick={() =>
+                            setContent((c) => {
+                              const collections = [...c.community.collections],
+                                items = [...collections[collectionIndex].items];
+                              [items[i - 1], items[i]] = [
+                                items[i],
+                                items[i - 1],
+                              ];
+                              collections[collectionIndex] = {
+                                ...collections[collectionIndex],
+                                items,
+                              };
+                              return {
+                                ...c,
+                                community: { ...c.community, collections },
+                              };
+                            })
+                          }
+                        >
+                          ↑
+                        </button>
+                        <button
+                          disabled={i === collection.items.length - 1}
+                          onClick={() =>
+                            setContent((c) => {
+                              const collections = [...c.community.collections],
+                                items = [...collections[collectionIndex].items];
+                              [items[i + 1], items[i]] = [
+                                items[i],
+                                items[i + 1],
+                              ];
+                              collections[collectionIndex] = {
+                                ...collections[collectionIndex],
+                                items,
+                              };
+                              return {
+                                ...c,
+                                community: { ...c.community, collections },
+                              };
+                            })
+                          }
+                        >
+                          ↓
+                        </button>
+                        <button
+                          onClick={() =>
+                            setContent((c) => {
+                              const collections = [...c.community.collections];
+                              collections[collectionIndex] = {
+                                ...collections[collectionIndex],
+                                items: collections[
+                                  collectionIndex
+                                ].items.filter((_, n) => n !== i),
+                              };
+                              return {
+                                ...c,
+                                community: { ...c.community, collections },
+                              };
+                            })
+                          }
+                        >
+                          מחיקה
+                        </button>
+                      </div>
+                      <label className="switch">
+                        <input
+                          type="checkbox"
+                          checked={item.visible}
+                          onChange={(e) =>
+                            setContent((c) => {
+                              const collections = [...c.community.collections],
+                                items = [...collections[collectionIndex].items];
+                              items[i] = {
+                                ...items[i],
+                                visible: e.target.checked,
+                              };
+                              collections[collectionIndex] = {
+                                ...collections[collectionIndex],
+                                items,
+                              };
+                              return {
+                                ...c,
+                                community: { ...c.community, collections },
+                              };
+                            })
+                          }
+                        />{" "}
+                        הכרטיס מוצג באתר
+                      </label>
+                      {(
+                        [
+                          ["title", "כותרת"],
+                          ["subtitle", "כותרת משנה"],
+                          ["summary", "תקציר"],
+                          ["slug", "שם קצר לכתובת העמוד (באנגלית)"],
+                          ["imageAlt", "תיאור התמונה"],
+                        ] as const
+                      ).map(([key, label]) =>
+                        field(
+                          label,
+                          item[key],
+                          (v) =>
+                            setContent((c) => {
+                              const collections = [...c.community.collections],
+                                items = [...collections[collectionIndex].items];
+                              items[i] = { ...items[i], [key]: v };
+                              collections[collectionIndex] = {
+                                ...collections[collectionIndex],
+                                items,
+                              };
+                              return {
+                                ...c,
+                                community: { ...c.community, collections },
+                              };
+                            }),
+                          key === "summary" ? 3 : 2,
+                          ["title", "subtitle", "summary"].includes(key)
+                            ? `community.collections.${collectionIndex}.items.${i}.${key}`
+                            : undefined,
+                        ),
+                      )}
+                      {fileField("תמונת הכרטיס", item.image, "image/*", (v) =>
+                        setContent((c) => {
+                          const collections = [...c.community.collections],
+                            items = [...collections[collectionIndex].items];
+                          items[i] = { ...items[i], image: v };
+                          collections[collectionIndex] = {
+                            ...collections[collectionIndex],
+                            items,
+                          };
+                          return {
+                            ...c,
+                            community: { ...c.community, collections },
+                          };
+                        }),
+                      )}
+                      {mediaControl(`community${collectionIndex}-${i}`)}
+                      {field(
+                        "התוכן המלא בעמוד",
+                        item.body,
+                        (v) =>
+                          setContent((c) => {
+                            const collections = [...c.community.collections],
+                              items = [...collections[collectionIndex].items];
+                            items[i] = { ...items[i], body: v };
+                            collections[collectionIndex] = {
+                              ...collections[collectionIndex],
+                              items,
+                            };
+                            return {
+                              ...c,
+                              community: { ...c.community, collections },
+                            };
+                          }),
+                        7,
+                      )}
+                      <label>
+                        מה נפתח בלחיצה
+                        <select
+                          value={item.linkMode}
+                          onChange={(e) =>
+                            setContent((c) => {
+                              const collections = [...c.community.collections],
+                                items = [...collections[collectionIndex].items];
+                              items[i] = {
+                                ...items[i],
+                                linkMode: e.target
+                                  .value as typeof item.linkMode,
+                              };
+                              collections[collectionIndex] = {
+                                ...collections[collectionIndex],
+                                items,
+                              };
+                              return {
+                                ...c,
+                                community: { ...c.community, collections },
+                              };
+                            })
+                          }
+                        >
+                          <option value="page">עמוד פנימי באתר</option>
+                          <option value="external">קישור חיצוני</option>
+                          <option value="none">ללא קישור</option>
+                        </select>
+                      </label>
+                      {item.linkMode === "external" &&
+                        field("כתובת הקישור", item.link, (v) =>
+                          setContent((c) => {
+                            const collections = [...c.community.collections],
+                              items = [...collections[collectionIndex].items];
+                            items[i] = { ...items[i], link: v };
+                            collections[collectionIndex] = {
+                              ...collections[collectionIndex],
+                              items,
+                            };
+                            return {
+                              ...c,
+                              community: { ...c.community, collections },
+                            };
+                          }),
+                        )}
+                    </div>
+                  ))}
+                  <button
+                    className="add-button"
+                    onClick={() =>
+                      setContent((c) => {
+                        const collections = [...c.community.collections],
+                          items = [
+                            ...collections[collectionIndex].items,
+                            {
+                              id: crypto.randomUUID(),
+                              visible: true,
+                              title: "כרטיס חדש",
+                              subtitle: "",
+                              summary: "",
+                              image: "",
+                              imageAlt: "",
+                              slug: `card-${collection.items.length + 1}`,
+                              body: "",
+                              link: "",
+                              linkMode: "page" as const,
+                            },
+                          ];
+                        collections[collectionIndex] = {
+                          ...collections[collectionIndex],
+                          items,
+                        };
+                        return {
+                          ...c,
+                          community: { ...c.community, collections },
+                        };
+                      })
+                    }
+                  >
+                    הוספת כרטיס לאוסף
+                  </button>
+                </div>
+              ),
+            )}
+            <button
+              className="add-button"
+              onClick={() =>
+                setContent((c) => ({
+                  ...c,
+                  community: {
+                    ...c.community,
+                    collections: [
+                      ...c.community.collections,
+                      {
+                        id: crypto.randomUUID(),
+                        visible: true,
+                        kicker: "",
+                        title: "אוסף חדש",
+                        description: "",
+                        template: "square",
+                        columns: 3,
+                        items: [],
+                      },
+                    ],
+                  },
+                }))
+              }
+            >
+              הוספת אוסף כרטיסים
+            </button>
           </>
         )}
-        {id !== "events" && Array.isArray(data.items) &&
+        {id !== "events" &&
+          Array.isArray(data.items) &&
           itemList(
             id,
             data.items as Array<string | { title: string; text: string }>,
@@ -825,8 +1680,13 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
               />{" "}
               הצגת הכותרת העליונה
             </label>
-            {field("שם המותג", content.site.brand, (v) =>
-              setContent((c) => ({ ...c, site: { ...c.site, brand: v } })),
+            {field(
+              "שם המותג",
+              content.site.brand,
+              (v) =>
+                setContent((c) => ({ ...c, site: { ...c.site, brand: v } })),
+              2,
+              "site.brand",
             )}
             <label className="switch">
               <input
@@ -884,12 +1744,17 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
                   />{" "}
                   הכפתור מוצג
                 </label>
-                {field("שם הכפתור", n.label, (v) =>
-                  setContent((c) => {
-                    const a = [...c.site.navigation];
-                    a[i] = { ...a[i], label: v };
-                    return { ...c, site: { ...c.site, navigation: a } };
-                  }),
+                {field(
+                  "שם הכפתור",
+                  n.label,
+                  (v) =>
+                    setContent((c) => {
+                      const a = [...c.site.navigation];
+                      a[i] = { ...a[i], label: v };
+                      return { ...c, site: { ...c.site, navigation: a } };
+                    }),
+                  2,
+                  `site.navigation.${i}.label`,
                 )}
                 {field("הקישור", n.href, (v) =>
                   setContent((c) => {
@@ -964,8 +1829,16 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
               />{" "}
               הצגת תחתית האתר
             </label>
-            {field("טקסט בתחתית", content.site.footerText, (v) =>
-              setContent((c) => ({ ...c, site: { ...c.site, footerText: v } })),
+            {field(
+              "טקסט בתחתית",
+              content.site.footerText,
+              (v) =>
+                setContent((c) => ({
+                  ...c,
+                  site: { ...c.site, footerText: v },
+                })),
+              2,
+              "site.footerText",
             )}
             {fileField(
               "לוגו בתחתית",
@@ -1028,29 +1901,49 @@ export default function ManageClient({ initial }: { initial: SiteContent }) {
                 opening: { ...c.opening, imageAlt: v },
               })),
             )}
-            {field("הזמנה לכניסה", content.opening.enter, (v) =>
-              setContent((c) => ({
-                ...c,
-                opening: { ...c.opening, enter: v },
-              })),
+            {field(
+              "הזמנה לכניסה",
+              content.opening.enter,
+              (v) =>
+                setContent((c) => ({
+                  ...c,
+                  opening: { ...c.opening, enter: v },
+                })),
+              2,
+              "opening.enter",
             )}
-            {field("תחילת השביל", content.opening.journeyStart, (v) =>
-              setContent((c) => ({
-                ...c,
-                opening: { ...c.opening, journeyStart: v },
-              })),
+            {field(
+              "תחילת השביל",
+              content.opening.journeyStart,
+              (v) =>
+                setContent((c) => ({
+                  ...c,
+                  opening: { ...c.opening, journeyStart: v },
+                })),
+              2,
+              "opening.journeyStart",
             )}
-            {field("מילת החיבור", content.opening.journeyBridge, (v) =>
-              setContent((c) => ({
-                ...c,
-                opening: { ...c.opening, journeyBridge: v },
-              })),
+            {field(
+              "מילת החיבור",
+              content.opening.journeyBridge,
+              (v) =>
+                setContent((c) => ({
+                  ...c,
+                  opening: { ...c.opening, journeyBridge: v },
+                })),
+              2,
+              "opening.journeyBridge",
             )}
-            {field("יעד השביל", content.opening.journeyArrival, (v) =>
-              setContent((c) => ({
-                ...c,
-                opening: { ...c.opening, journeyArrival: v },
-              })),
+            {field(
+              "יעד השביל",
+              content.opening.journeyArrival,
+              (v) =>
+                setContent((c) => ({
+                  ...c,
+                  opening: { ...c.opening, journeyArrival: v },
+                })),
+              2,
+              "opening.journeyArrival",
             )}
           </div>
         </details>
