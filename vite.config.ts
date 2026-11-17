@@ -6,7 +6,7 @@ import { sites } from "./build/sites-vite-plugin";
 const CLOUDFLARE_DATABASE_ID =
   "86fa2900-46c5-4d7e-bc88-4b59c1f1cb9e";
 
-const { d1, r2 } = hostingConfig;
+const { d1 } = hostingConfig;
 
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
@@ -20,14 +20,6 @@ const localBindingConfig = {
           binding: d1,
           database_name: "bishvil-hahavaya-db",
           database_id: CLOUDFLARE_DATABASE_ID,
-        },
-      ]
-    : [],
-  r2_buckets: r2
-    ? [
-        {
-          binding: r2,
-          bucket_name: "site-creator-r2",
         },
       ]
     : [],
